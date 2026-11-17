@@ -29,6 +29,7 @@
     <p id="comparison-note">Both views use the same coordinates, field scale, and photon launches.</p>
   </div>
   <p id="model-note"></p>
+  <a class="model-source-jump" href="#model-notes">Model equations and sources ↓</a>
   <div class="parameters">
     <div id="speed-row"><label for="speed">Bubble speed <output id="speed-out"></output></label><input id="speed" type="range" min="0" max="2" step=".01" value=".65"></div>
     <div id="radius-row"><label for="radius">Bubble radius <output id="radius-out"></output></label><input id="radius" type="range" min="1.2" max="3" step=".05" value="2.1"></div>
@@ -61,7 +62,7 @@
   </section>
 </template>
 <section class="notebook" aria-label="Simulation notes">
-<details open><summary>Model equations and interpretation</summary><div id="equations"></div><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
+<details open id="model-notes"><summary>Model equations and sources</summary><div id="equations"></div><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
 </section>
 <section id="research" class="research">
   <div class="eyebrow"><span></span> REFERENCES</div><h2>Research library</h2>

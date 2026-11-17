@@ -83,3 +83,8 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 30px;disp
 #equations h3{margin:12px 0 4px;font-size:.93rem}
 @media(max-width:1050px){.plots.comparing .readouts>div{padding:8px 6px}.plots.comparing .readouts strong{font-size:.9rem}}
 @media(max-width:850px){.plots.comparing{grid-template-columns:minmax(0,1fr)}.plots.comparing .plot+.plot{border-top:1px solid var(--line)}}
+.model-source-jump{display:inline-block;margin-top:4px;font-size:.8rem}
+#equations h4{margin:12px 0 4px;font-size:.86rem}
+.model-sources{padding-left:20px;margin:6px 0 14px;font-size:.88rem}
+.model-sources li+li{margin-top:7px}
+.notebook .model-sources p{margin:2px 0;font-size:.83rem}

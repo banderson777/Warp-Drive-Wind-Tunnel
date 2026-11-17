@@ -2,11 +2,37 @@
 const byId=id=>document.getElementById(id);
 const inputs=['speed','radius','width','compactness'];
 const models={
-  alcubierre:['A translating bubble with flat spatial slices.','NEC violated','For nonzero speed in this model.','ds² = −dt² + [dx + v(1 − f)dt]² + dy² + dz²','The wall’s transverse shear gives ρ = −v²(f′y/r)²/(32π) on this slice. Expansion θ = vf′x/r. An axial photon emitted toward the front has coordinate speed 1 − v(1 − f), which can vanish in the wall for v > 1.','https://arxiv.org/abs/gr-qc/0009013'],
-  natario:['A translating bubble with divergence-free flow.','NEC violated','For this nontrivial zero-expansion flow.','u = ∇ × [vf(r)(eₓ × r⃗)/2],  ds² = −dt² + |d𝐫 − (u − veₓ)dt|²','The radial profile is used as a vector potential. The volume expansion vanishes everywhere, while shear requires negative Eulerian energy. The local flow can exceed the prescribed bubble speed.','https://arxiv.org/abs/gr-qc/0110086'],
-  pocket:['A large proper interior behind a small coordinate radius.','WEC violated','Negative Eulerian density in the conformal wall.','ds² = −dt² + B(r)²{[dx + v(1 − f)dt]² + dy² + dz²}','Uses the Van Den Broeck metric ansatz with a softened teaching profile: B = 4 in the pocket and transitions to 1 across a quintic wall. The Hamiltonian constraint includes the intrinsic curvature of the B²-scaled spatial slices. This choice shows the geometry at moderate scales. The paper explores much larger scale ratios.','https://arxiv.org/abs/gr-qc/9905084'],
-  shell:['A static, curved-space comparison with a positive-density wall.','NEC violated','Radial null contraction is negative outside the wall.','ds² = −dt² + dr²/(1 − 2m(r)/r) + r²dΩ²','The mass function smoothly rises from zero to M across the shell. The density is m′/(4πr²), radial pressure is −m/(4πr³), and tangential pressure is (m − rm′)/(8πr³). Local NEC shows ρ + min(pᵣ, pₜ). This idealized shell has constant lapse and serves as a comparison with published subluminal shell metrics.','https://arxiv.org/abs/2405.02709'],
+  alcubierre:['A translating bubble with flat spatial slices.','NEC violated','For nonzero speed in this model.','ds² = −dt² + [dx + v(1 − f)dt]² + dy² + dz²','The wall’s transverse shear gives ρ = −v²(f′y/r)²/(32π) on this slice. Expansion θ = vf′x/r. An axial photon emitted toward the front has coordinate speed 1 − v(1 − f), which can vanish in the wall for v > 1.'],
+  natario:['A translating bubble with divergence-free flow.','NEC violated','For this nontrivial zero-expansion flow.','u = ∇ × [vf(r)(eₓ × r⃗)/2],  ds² = −dt² + |d𝐫 − (u − veₓ)dt|²','The radial profile is used as a vector potential. The volume expansion vanishes everywhere, while shear requires negative Eulerian energy. The local flow can exceed the prescribed bubble speed.'],
+  pocket:['A large proper interior behind a small coordinate radius.','WEC violated','Negative Eulerian density in the conformal wall.','ds² = −dt² + B(r)²{[dx + v(1 − f)dt]² + dy² + dz²}','Uses the Van Den Broeck metric ansatz with a softened teaching profile: B = 4 in the pocket and transitions to 1 across a quintic wall. The Hamiltonian constraint includes the intrinsic curvature of the B²-scaled spatial slices. This choice shows the geometry at moderate scales. The paper explores much larger scale ratios.'],
+  shell:['A static, curved-space comparison with a positive-density wall.','NEC violated','Radial null contraction is negative outside the wall.','ds² = −dt² + dr²/(1 − 2m(r)/r) + r²dΩ²','The mass function smoothly rises from zero to M across the shell. The density is m′/(4πr²), radial pressure is −m/(4πr³), and tangential pressure is (m − rm′)/(8πr³). Local NEC shows ρ + min(pᵣ, pₜ). This idealized shell has constant lapse and serves as a comparison with published subluminal shell metrics.'],
   flat:['The special-relativistic control for the optical experiment.','Vacuum','Null energy condition saturated.','ds² = −dt² + dx² + dy² + dz²','The stress–energy and shift vanish. Photons follow straight lines.']
+};
+const modelSources={
+  alcubierre:[
+    ['Alcubierre (1994) · The warp drive','Original metric, bubble profile, and energy density.','https://arxiv.org/abs/gr-qc/0009013'],
+    ['Lobo & Visser (2004) · Fundamental limitations','Energy-condition violations in the Alcubierre and Natário metrics.','https://arxiv.org/abs/gr-qc/0406083'],
+    ['Finazzi, Liberati & Barceló (2009) · Semiclassical instability','Quantum stress–energy and horizons in a dynamical warp-drive model.','https://arxiv.org/abs/0904.0141']
+  ],
+  natario:[
+    ['Natário (2002) · Warp drive with zero expansion','Construction of a divergence-free shift and its geometric interpretation.','https://arxiv.org/abs/gr-qc/0110086'],
+    ['Santiago, Schuster & Visser (2022) · Null energy condition','Energy-condition constraints for the broader Natário class.','https://arxiv.org/abs/2105.03079'],
+    ['Sharp negative-energy bound (2026 preprint)','A lower bound on integrated negative Eulerian energy for zero-expansion walls under prescribed matching conditions.','https://arxiv.org/abs/2609.36211']
+  ],
+  pocket:[
+    ['Van Den Broeck (1999) · A warp drive with more reasonable total energy requirements','Original conformal pocket and its energy estimates.','https://arxiv.org/abs/gr-qc/9905084'],
+    ['Van Den Broeck (1999) · On the (im)possibility of warp bubbles','Companion discussion of the pocket geometry and its physical limitations.','https://arxiv.org/abs/gr-qc/9906050'],
+    ['Observer-robust energy checks (2026 preprint)','Numerical comparison of energy conditions across several metrics, including the Van Den Broeck pocket.','https://arxiv.org/abs/2602.18023']
+  ],
+  shell:[
+    ['Morris & Thorne (1988) · Static spherical metric and stress–energy','Section III gives the spherical shape and redshift functions used to derive the shell equations. Here the redshift function is zero and the shape function is 2m(r).','https://epizodyspace.ru/bibl/inostr-yazyki/ajph/1988/morris_thorne.pdf'],
+    ['Bobrick & Martire (2021) · Introducing physical warp drives','Classifies warp spacetimes and studies subluminal matter shells.','https://arxiv.org/abs/2102.06824'],
+    ['Fuchs et al. (2024) · Constant velocity physical warp drive solution','Related moving-shell proposal that combines a matter shell and a shift field.','https://arxiv.org/abs/2405.02709']
+  ],
+  flat:[
+    ['Einstein (1905) · On the electrodynamics of moving bodies','Foundations of special relativity, including the invariance of light speed.','https://physics.umd.edu/courses/Phys371/AnlageFall19/Einstein_1905_relativity.pdf'],
+    ['David Tong · Geodesics in spacetime','University of Cambridge lecture notes on the Minkowski metric, null intervals, and geodesics.','https://www.damtp.cam.ac.uk/user/tong/gr/grhtml/S1.html']
+  ]
 };
 const library=[
   ['1994','Alcubierre · Hyper-fast travel','The original prescribed translating bubble and its required stress–energy.','https://arxiv.org/abs/gr-qc/0009013'],
@@ -117,7 +143,7 @@ function updateEquations(selected){
   if(key===metric) return;
   metric=key;
   const sections=[...new Set(selected)].map(model=>{
-    const [,,,equation,interpretation,url]=models[model];
+    const [,,,equation,interpretation]=models[model];
     const section=document.createElement('section'), formula=document.createElement('p'), explanation=document.createElement('p');
     if(selected.length>1){
       const heading=document.createElement('h3');
@@ -127,13 +153,20 @@ function updateEquations(selected){
     formula.className='formula';
     formula.textContent=equation;
     explanation.textContent=interpretation;
-    if(url){
-      const link=document.createElement('a');
+    const sourceHeading=document.createElement(selected.length>1?'h4':'h3');
+    sourceHeading.textContent='Sources and further reading';
+    const sources=document.createElement('ul');
+    sources.className='model-sources';
+    for(const [title,note,url] of modelSources[model]){
+      const item=document.createElement('li'), link=document.createElement('a');
+      const description=document.createElement('p');
       link.href=url;
-      link.textContent=model==='shell'?'Related paper ↗':'Model reference ↗';
-      explanation.append(' ',link);
+      link.textContent=title;
+      description.textContent=note;
+      item.append(link,description);
+      sources.append(item);
     }
-    section.append(formula,explanation);
+    section.append(formula,explanation,sourceHeading,sources);
     return section;
   });
   byId('equations').replaceChildren(...sections);
@@ -260,6 +293,7 @@ byId('reset').addEventListener('click',()=>{
   setPause();
   queue();
 });
+document.querySelector('.model-source-jump').addEventListener('click',()=>{byId('model-notes').open=true;});
 const observer=new ResizeObserver(queue);
 for(const panel of panels) observer.observe(panel.canvas);
 queue();
