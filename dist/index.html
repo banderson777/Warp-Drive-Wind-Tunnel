@@ -6,6 +6,7 @@
 <meta name="description" content="An interactive general relativity laboratory for exploring warp metrics and null geodesics.">
 <title>Warp Photon Wind Tunnel Simulator</title>
 <link rel="stylesheet" href="style.css">
+<script defer src="equations.js"></script>
 <script defer src="physics.js"></script>
 <script defer src="app.js"></script>
 </head>
@@ -21,15 +22,16 @@
 <aside class="controls" aria-label="Simulation controls">
   <h2>Configuration</h2>
   <label for="model">Spacetime model</label>
-  <select id="model"><option value="alcubierre">Alcubierre bubble</option><option value="natario">Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Static matter shell</option><option value="flat">Minkowski control</option></select>
+  <select id="model"><option value="alcubierre">Alcubierre bubble</option><option value="natario">Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Static matter shell</option><option value="flat">Minkowski control</option><option value="custom">Custom equation</option></select>
   <label class="check compare-toggle"><input id="compare" type="checkbox"> Compare two models</label>
   <div id="comparison-controls" hidden>
     <label for="second-model">Comparison model</label>
-    <select id="second-model"><option value="alcubierre">Alcubierre bubble</option><option value="natario" selected>Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Static matter shell</option><option value="flat">Minkowski control</option></select>
+    <select id="second-model"><option value="alcubierre">Alcubierre bubble</option><option value="natario" selected>Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Static matter shell</option><option value="flat">Minkowski control</option><option value="custom">Custom equation</option></select>
     <p id="comparison-note">Both views use the same coordinates, field scale, and photon launches.</p>
   </div>
   <p id="model-note"></p>
   <a class="model-source-jump" href="#model-notes">Model equations and sources ↓</a>
+  <a class="model-source-jump" id="edit-model" href="#equation-editor">Edit equations ↓</a>
   <div class="parameters">
     <div id="speed-row"><label for="speed">Bubble speed <output id="speed-out"></output></label><input id="speed" type="range" min="0" max="2" step=".01" value=".65"></div>
     <div id="radius-row"><label for="radius">Bubble radius <output id="radius-out"></output></label><input id="radius" type="range" min="1.2" max="3" step=".05" value="2.1"></div>
@@ -45,8 +47,9 @@
   <div class="layers" role="group" aria-label="Field layer">
     <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Shift speed</button><button data-field="nec" aria-pressed="false">Local NEC</button>
   </div>
+  <p id="plot-error" role="alert" hidden></p>
   <div class="plots" id="plots"></div>
-  <div class="legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
+  <div class="legend" id="field-legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
   <p class="launch-note" id="launch-note" hidden></p>
 </section>
 </div>
@@ -61,6 +64,30 @@
     </div>
   </section>
 </template>
+<section class="notebook editor" id="equation-editor" aria-labelledby="editor-title">
+  <h2 id="editor-title">Equation editor</h2>
+  <p>Edit a radial function within a metric family. The tunnel recomputes field maps and photon paths from the applied functions.</p>
+  <form id="equation-form">
+    <label for="equation-family">Metric family</label>
+    <select id="equation-family">
+      <option value="alcubierre">Axial shift · Alcubierre</option>
+      <option value="natario">Divergence-free shift · Natário</option>
+      <option value="pocket">Conformal pocket · Van Den Broeck</option>
+      <option value="shell">Ultrastatic spherical shell</option>
+    </select>
+    <div id="equation-fields"></div>
+    <details class="expression-help"><summary>Expression syntax and assumptions</summary>
+      <p><code>r</code> is coordinate radius, <code>R</code> is the radius slider, <code>w</code> is wall scale, <code>v</code> is bubble speed (zero for the static shell), and <code>C</code> is compactness. Use <code>pi</code>, explicit multiplication, and <code>+ − * / ^</code> with parentheses. Type <code>-</code> for minus.</p>
+      <p>Functions: <code>sin</code>, <code>cos</code>, <code>tanh</code>, <code>exp</code>, <code>log</code>, <code>sqrt</code>, <code>abs</code>, <code>min</code>, <code>max</code>, <code>clamp(x, lo, hi)</code>, and <code>smooth5(x)</code>, a clamped quintic smoothstep.</p>
+      <p>Use smooth profiles near the region of interest. The editor samples the domain and uses finite differences. Very narrow features can fall between samples. Custom profiles may change the exterior geometry and photon entry behavior.</p>
+    </details>
+    <div class="editor-actions">
+      <button type="submit">Apply custom equation</button>
+      <button type="button" id="load-preset">Load family preset</button>
+    </div>
+    <p id="equation-status" role="status"></p>
+  </form>
+</section>
 <section class="notebook" aria-label="Simulation notes">
 <details open id="model-notes"><summary>Model equations and sources</summary><div id="equations"></div><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
 </section>

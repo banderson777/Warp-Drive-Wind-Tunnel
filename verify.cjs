@@ -74,3 +74,32 @@ console.log('Minkowski maximum position error:', maxPositionError.toExponential(
 console.log('Alcubierre equatorial density:', measuredAlcubierre.toExponential(6), 'ℓ⁻²');
 console.log('Natário equatorial density:', measuredNatario.toExponential(6), 'ℓ⁻²');
 console.log('Matched photon launch checks passed.');
+
+// Equation parsing and built-in profile equivalence.
+const Equations = require('./dist/equations');
+assert.strictEqual(Equations.compile('-2^2 + 2^3^2')(0, settings), 508);
+assert.strictEqual(Equations.compile('clamp(1e-2 + r, 0, 1)')(2, settings), 1);
+for (const invalid of ['','r +','Math.sin(r)','eval(r)','2r','min(r)','1e999']) {
+  assert.throws(() => Equations.compile(invalid));
+}
+for (const base of [alcubierre,natario,pocket,shell]) {
+  const custom = Equations.create(base.model, Equations.defaults[base.model]);
+  const edited = { ...base, custom };
+  Warp.validate(edited, 6.2);
+  for (const [x,y] of [[0,0],[.6,.6],[0,R],[.2,R],[3,0]]) {
+    const original = Warp.field(x, y, base), equivalent = Warp.field(x, y, edited);
+    for (const key of ['rho','expansion','shift']) {
+      assert(Math.abs(original[key]-equivalent[key]) < 2e-4, base.model+' '+key);
+    }
+    assert(Math.abs(Warp.hamiltonian([x,y,.6,.8],edited)-Warp.hamiltonian([x,y,.6,.8],base)) < 1e-6);
+  }
+}
+const zero = {...alcubierre,custom:Equations.create('alcubierre',{f:'0'})};
+const gaussian = {...alcubierre,custom:Equations.create('alcubierre',{f:'exp(-(r/R)^2)'})};
+assert.equal(Math.abs(Warp.field(0, R, zero).rho),0);
+assert(Warp.field(0, R, gaussian).rho < 0);
+assert(Warp.rays(gaussian,6.2).every(ray=>ray.path.length>5 && ray.drift < .002));
+assert.throws(()=>Warp.validate({...pocket,custom:Equations.create('pocket',{f:'0',B:'0'})},6.2),/positive/);
+assert.throws(()=>Warp.validate({...shell,custom:Equations.create('shell',{m:'r'})},6.2),/2m|regular shell/);
+assert.throws(()=>Warp.validate({...alcubierre,custom:Equations.create('alcubierre',{f:'1/r'})},6.2),/finite/);
+console.log('Custom equations and preset equivalence checks passed.');

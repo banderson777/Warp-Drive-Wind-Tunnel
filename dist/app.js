@@ -76,24 +76,90 @@ const panels=Array.from({length:2},()=>{
 });
 panels[1].element.hidden=true;
 
+const shapeLabels={
+  f:'f(r) · Shift profile',
+  B:'B(r) · Spatial conformal scale',
+  m:'m(r) · Enclosed mass'
+};
+const storageKey='warp-tunnel-equations-v1';
+let custom=WarpEquations.create('alcubierre',WarpEquations.defaults.alcubierre);
+try{
+  const saved=JSON.parse(localStorage.getItem(storageKey));
+  if(saved) custom=WarpEquations.create(saved.family,saved.formulas);
+}catch(error){
+  // Local storage may be disabled or contain an earlier invalid draft.
+}
+
+function currentValues(){
+  return Object.fromEntries(inputs.map(id=>[id,Number(byId(id).value)]));
+}
+function settingsFor(model,values){
+  const family=model==='custom'?custom.family:model;
+  return {...values,model:family,speed:['flat','shell'].includes(family)?0:values.speed,
+    ...(model==='custom'?{custom}: {})};
+}
+function loadEditor(family,formulas){
+  byId('equation-family').value=family;
+  const fields=Object.entries(formulas).map(([key,value])=>{
+    const row=document.createElement('div'), label=document.createElement('label'), input=document.createElement('textarea');
+    input.id='expression-'+key;
+    input.name=key;
+    input.value=value;
+    input.rows=2;
+    input.maxLength=600;
+    input.spellcheck=false;
+    input.required=true;
+    label.htmlFor=input.id;
+    label.textContent=family==='natario' && key==='f'?'f(r) · Vector potential profile':shapeLabels[key];
+    row.append(label,input);
+    return row;
+  });
+  byId('equation-fields').replaceChildren(...fields);
+  byId('equation-status').textContent='';
+}
+function applyEquation(event){
+  event.preventDefault();
+  const status=byId('equation-status');
+  try{
+    const family=byId('equation-family').value;
+    const candidate=WarpEquations.create(family,Object.fromEntries(new FormData(event.currentTarget)));
+    const values=currentValues();
+    Warp.validate({...values,model:family,speed:family==='shell'?0:values.speed,custom:candidate},extent);
+    custom=candidate;
+    try{localStorage.setItem(storageKey,JSON.stringify(candidate));}catch(error){/* Storage is optional. */}
+    if(!byId('compare').checked || byId('second-model').value!=='custom') byId('model').value='custom';
+    status.textContent='Applied to the tunnel. Adjust the sliders or compare with a preset.';
+    status.classList.remove('error');
+    queue();
+  }catch(error){
+    status.classList.add('error');
+    status.textContent=error.message+' The last applied equation is still active.';
+  }
+}
+
 function update(){
   const comparing=byId('compare').checked;
   const primary=byId('model').value;
   const selected=comparing?[primary,byId('second-model').value]:[primary];
   const active=panels.slice(0,selected.length);
-  const supportsNEC=selected.every(model=>['shell','flat'].includes(model));
+  const values=currentValues();
+  const settings=selected.map(model=>settingsFor(model,values));
+  const supportsNEC=settings.every(s=>['shell','flat'].includes(s.model));
   if(layer==='nec' && !supportsNEC) layer='rho';
   byId('comparison-controls').hidden=!comparing;
   byId('plots').classList.toggle('comparing',comparing);
   panels[1].element.hidden=!comparing;
-  const values=Object.fromEntries(inputs.map(id=>[id,Number(byId(id).value)]));
-  const settings=selected.map(model=>({...values,model,speed:['flat','shell'].includes(model)?0:values.speed}));
   for(const id of inputs){
-    const needed=selected.some(model=>model!=='flat' && (id==='compactness'?model==='shell':id!=='speed'||model!=='shell'));
+    const needed=settings.some(s=>{
+      if(s.model==='flat') return false;
+      if(id==='speed') return s.model!=='shell';
+      if(id==='compactness') return s.model==='shell' || Boolean(s.custom);
+      return true;
+    });
     byId(id+'-row').hidden=!needed;
     byId(id+'-out').textContent=values[id].toFixed(2)+({speed:' c',radius:' ℓ',width:' ℓ',compactness:''}[id]);
   }
-  byId('model-note').textContent=models[primary][0];
+  byId('model-note').textContent=primary==='custom'?'Custom profile · '+models[custom.family][0]:models[primary][0];
   const direction=Math.min(...settings.map(Warp.rayDirection));
   const dt=Math.min(...settings.map(Warp.rayTimeStep));
   const traceEnabled=byId('rays').checked;
@@ -101,6 +167,7 @@ function update(){
   byId('launch-note').textContent=direction===1?'Photons enter both views from the left.':'Photons enter both views from the right at the selected bubble speed.';
   for(const [index,panel] of active.entries()){
     const snapshot=settings[index], model=snapshot.model;
+    if(snapshot.custom) Warp.validate(snapshot,extent);
     const title=byId(index?'second-model':'model').selectedOptions[0].textContent;
     panel.snapshot=snapshot;
     panel.get('title').textContent=title;
@@ -111,14 +178,19 @@ function update(){
     panel.get('condition-note').textContent=vacuum?models.flat[2]:models[model][2];
     const traceKey=JSON.stringify([snapshot,direction,dt,traceEnabled]);
     if(traceKey!==panel.traceKey){
-      panel.traceKey=traceKey;
       panel.trace=traceEnabled?Warp.rays(snapshot,extent,{direction,dt}):[];
+      panel.traceKey=traceKey;
       panel.get('integration').textContent=traceEnabled?scientific(Math.max(...panel.trace.map(ray=>ray.drift))):'Off';
     }
     const sampleKey=JSON.stringify([snapshot,layer]);
     if(sampleKey!==panel.sampleKey){
-      panel.sampleKey=sampleKey;
       panel.samples=sample(panel);
+      panel.sampleKey=sampleKey;
+    }
+    if(snapshot.custom){
+      const violation=snapshot.model==='shell'?panel.samples.minNec < -1e-10:panel.samples.minRho < -1e-10;
+      panel.get('condition').textContent=violation?(snapshot.model==='shell'?'NEC violated':'WEC violated'):'Undetermined';
+      panel.get('condition-note').textContent=violation?'Negative value on the sampled slice.':'Sampling alone cannot certify energy conditions.';
     }
   }
   updateEquations(selected);
@@ -132,6 +204,8 @@ function update(){
   byId('legend-min').textContent=scientific(negativeValues?-limit:0);
   byId('legend-max').textContent=scientific(positiveValues?limit:0);
   byId('gradient').style.background=negativeValues && positiveValues?'linear-gradient(90deg,#e76ff7,#080f1c,#3fe0cd)':negativeValues?'linear-gradient(90deg,#e76ff7,#080f1c)':positiveValues?'linear-gradient(90deg,#080f1c,#3fe0cd)':'#28364d';
+  byId('plots').hidden=false;
+  byId('field-legend').hidden=false;
   for(const panel of active){
     colorize(panel,limit);
     resize(panel);
@@ -139,11 +213,12 @@ function update(){
   }
 }
 function updateEquations(selected){
-  const key=selected.join(',');
+  const key=JSON.stringify([selected,custom.family,custom.formulas]);
   if(key===metric) return;
   metric=key;
   const sections=[...new Set(selected)].map(model=>{
-    const [,,,equation,interpretation]=models[model];
+    const family=model==='custom'?custom.family:model;
+    const [,,,equation,interpretation]=models[family];
     const section=document.createElement('section'), formula=document.createElement('p'), explanation=document.createElement('p');
     if(selected.length>1){
       const heading=document.createElement('h3');
@@ -152,12 +227,21 @@ function updateEquations(selected){
     }
     formula.className='formula';
     formula.textContent=equation;
-    explanation.textContent=interpretation;
+    explanation.textContent=model==='custom'?'The metric family uses the applied radial functions below.':interpretation;
+    section.append(formula,explanation);
+    if(model==='custom'){
+      for(const [name,expression] of Object.entries(custom.formulas)){
+        const line=document.createElement('p');
+        line.className='formula';
+        line.textContent=name+'(r) = '+expression;
+        section.append(line);
+      }
+    }
     const sourceHeading=document.createElement(selected.length>1?'h4':'h3');
     sourceHeading.textContent='Sources and further reading';
     const sources=document.createElement('ul');
     sources.className='model-sources';
-    for(const [title,note,url] of modelSources[model]){
+    for(const [title,note,url] of modelSources[family]){
       const item=document.createElement('li'), link=document.createElement('a');
       const description=document.createElement('p');
       link.href=url;
@@ -166,7 +250,7 @@ function updateEquations(selected){
       item.append(link,description);
       sources.append(item);
     }
-    section.append(formula,explanation,sourceHeading,sources);
+    section.append(sourceHeading,sources);
     return section;
   });
   byId('equations').replaceChildren(...sections);
@@ -175,17 +259,19 @@ function sample(panel){
   const nx=200, ny=Math.round(nx/aspect), values=new Float64Array(nx*ny);
   panel.heat.width=nx;
   panel.heat.height=ny;
-  let min=0,max=0,minRho=0;
+  let min=0,max=0,minRho=0,minNec=0;
   for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){
     const x=(2*(i+.5)/nx-1)*extent, y=(1-2*(j+.5)/ny)*vertical;
-    const result=Warp.field(x,y,panel.snapshot), value=result[layer] || 0;
+    const result=Warp.field(x,y,panel.snapshot), value=result[layer];
+    if(!Number.isFinite(value) || !Number.isFinite(result.rho)) throw new Error('The sampled field overflows the numeric range.');
     values[j*nx+i]=value;
     min=Math.min(min,value);
     max=Math.max(max,value);
     minRho=Math.min(minRho,result.rho);
+    if(result.nec!==null) minNec=Math.min(minNec,result.nec);
   }
   panel.get('density').textContent=scientific(minRho);
-  return {min,max,values};
+  return {min,max,values,minRho,minNec};
 }
 function colorize(panel,limit){
   const {heat,hc,samples}=panel;
@@ -250,7 +336,20 @@ function paint({snapshot,w,h,ctx,heat,trace}){
 function queue(){
   if(scheduled) return;
   scheduled=true;
-  requestAnimationFrame(()=>{scheduled=false; update();});
+  requestAnimationFrame(()=>{
+    scheduled=false;
+    const error=byId('plot-error'), plots=byId('plots'), legend=byId('field-legend');
+    try{
+      update();
+      error.hidden=true;
+    }catch(cause){
+      error.textContent='The tunnel could not evaluate these settings. '+cause.message;
+      error.hidden=false;
+      plots.hidden=true;
+      legend.hidden=true;
+      byId('launch-note').hidden=true;
+    }
+  });
 }
 function resize(panel){
   const {canvas,ctx}=panel;
@@ -270,7 +369,7 @@ function setPause(){
   byId('pause').setAttribute('aria-pressed',paused);
 }
 function animate(now){
-  const running=panels.filter(panel=>!panel.element.hidden && panel.trace.length);
+  const running=byId('plots').hidden?[]:panels.filter(panel=>!panel.element.hidden && panel.trace.length);
   if(!paused && running.length && now-last>32){
     phase=(phase+Math.min(now-last,100)*.026)%75;
     running.forEach(paint);
@@ -294,6 +393,22 @@ byId('reset').addEventListener('click',()=>{
   queue();
 });
 document.querySelector('.model-source-jump').addEventListener('click',()=>{byId('model-notes').open=true;});
+byId('equation-form').addEventListener('submit',applyEquation);
+byId('equation-family').addEventListener('change',()=>{
+  const family=byId('equation-family').value;
+  loadEditor(family,WarpEquations.defaults[family]);
+});
+byId('load-preset').addEventListener('click',()=>{
+  const family=byId('equation-family').value;
+  loadEditor(family,WarpEquations.defaults[family]);
+});
+byId('edit-model').addEventListener('click',()=>{
+  const selected=byId('model').value;
+  if(selected==='custom') loadEditor(custom.family,custom.formulas);
+  else if(selected!=='flat') loadEditor(selected,WarpEquations.defaults[selected]);
+  else loadEditor('alcubierre',{f:'0'});
+});
+loadEditor(custom.family,custom.formulas);
 const observer=new ResizeObserver(queue);
 for(const panel of panels) observer.observe(panel.canvas);
 queue();

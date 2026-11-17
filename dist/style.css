@@ -88,3 +88,17 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 30px;disp
 .model-sources{padding-left:20px;margin:6px 0 14px;font-size:.88rem}
 .model-sources li+li{margin-top:7px}
 .notebook .model-sources p{margin:2px 0;font-size:.83rem}
+[hidden]{display:none!important}
+#plot-error{padding:14px 19px;color:#ffc0bd}
+.editor{scroll-margin-top:12px;margin-bottom:17px}
+.editor h2{font-size:1.2rem}
+.editor label{display:block;margin:11px 0 4px;font-size:.9rem}
+.editor select,.editor textarea{border:1px solid #394764;background:#090f1a;color:var(--white);border-radius:7px;padding:8px 10px}
+.editor textarea{width:100%;resize:vertical;font:400 .9rem/1.5 var(--mono)}
+.editor textarea:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.expression-help{margin:10px 0}
+.expression-help summary{font-size:.85rem}
+.editor-actions{display:flex;gap:8px;flex-wrap:wrap}
+.editor-actions button[type="submit"]{color:var(--mint);border-color:#527e7c}
+#equation-status:empty{display:none}
+#equation-status.error{color:#ffc0bd}

@@ -32,3 +32,18 @@ Open **Model equations and sources** in the simulator for annotated references f
 | Natário bubble | [Zero-expansion construction](https://arxiv.org/abs/gr-qc/0110086) · [Null energy condition](https://arxiv.org/abs/2105.03079) · [Negative-energy bound, preprint](https://arxiv.org/abs/2609.36211) |
 | Van Den Broeck pocket | [Original pocket geometry](https://arxiv.org/abs/gr-qc/9905084) · [Companion discussion](https://arxiv.org/abs/gr-qc/9906050) · [Observer-robust energy checks, preprint](https://arxiv.org/abs/2602.18023) |
 | Static matter shell | [Spherical metric and stress–energy, Section III](https://epizodyspace.ru/bibl/inostr-yazyki/ajph/1988/morris_thorne.pdf) · [Subluminal shell theory](https://arxiv.org/abs/2102.06824) · [Related moving-shell proposal](https://arxiv.org/abs/2405.02709) |
+
+## Custom equations
+
+Choose **Edit equations** to load an editable copy of the active model, or select a metric family in the editor. Change the radial expression and click **Apply custom equation**. The applied profile appears as **Custom equation** in both model selectors, so it can be compared with the built-in preset at the same slider values. The browser saves the last applied expressions locally when storage is available.
+
+| Metric family | Editable functions |
+| --- | --- |
+| Axial shift | Radial shift profile `f(r)` |
+| Divergence-free shift | Radial vector potential profile `f(r)` |
+| Conformal pocket | Shift profile `f(r)` and spatial conformal scale `B(r)` |
+| Ultrastatic shell | Enclosed mass `m(r)` |
+
+Try `exp(-(r/R)^2)` in the axial shift family for a Gaussian profile. Expressions use `r` (coordinate radius), `R` (radius slider), `w` (wall scale), `v` (speed), `C` (compactness), and `pi`. Use explicit multiplication and `^` for powers. The in-app syntax guide lists supported functions. Expressions are parsed as math.
+
+The editor supports radial functions within the four implemented metric families. Derivatives are estimated with finite differences. The engine checks sampled values and the required metric signature where it evaluates the geometry. Very narrow features can be under-resolved, and sampled diagnostics cannot certify energy conditions or physical realizability.
