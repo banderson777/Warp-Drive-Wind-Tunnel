@@ -55,3 +55,5 @@ Open **Shell experiments** to visualize three research cases. Inspect the static
 - [Source-first shell and rotation study](research/positive_energy_shell.md)
 - [Matter-sourced equilibrium and radial perturbation](research/vlasov_equilibrium.md)
 - [Time evolution, numerical checks, and data regeneration](research/vlasov_evolution.md)
+
+The **Matter-sourced counterrotation** mode solves for the first-order shift from a nonnegative kinetic distribution with compensating angular currents. [Derivation and reproduction instructions](research/vlasov_rotation.md)

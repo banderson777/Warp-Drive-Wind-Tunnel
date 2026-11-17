@@ -123,3 +123,7 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 30px;disp
 .shell-traces span:nth-child(3){color:#f1a2ed}
 .shell-links{font-size:.87rem;margin-top:10px}
 @media(max-width:680px){.shell-plots{grid-template-columns:1fr}.shell-controls label{flex:1;min-width:150px}.top nav{white-space:normal;line-height:1.2}}
+@media(max-width:680px){
+  .shell-controls label{flex:1 1 190px}
+  .shell-controls select{width:100%;min-width:0}
+}

@@ -1,6 +1,7 @@
 'use strict';
 (() => {
   const data=globalThis.WarpResearchData;
+  const kinetic=globalThis.WarpKineticRotation;
   const find=id=>document.getElementById('shell-'+id);
   const model=find('model'), run=find('run'), field=find('field'), frame=find('frame');
   const beamColors=['#75e6d7','#c0cbe2','#f1a2ed'];
@@ -12,16 +13,18 @@
     spin:['Azimuthal shift βφ','ℓ⁻¹',4],
     current:['Azimuthal momentum density j','ℓ⁻²',5]
   };
-  const options={vlasov:['rho','clock','pr','pt'],cluster:['rho','clock','pt'],rotation:['spin','current','rho','clock']};
+  const options={vlasov:['rho','clock','pr','pt'],cluster:['rho','clock','pt'],rotation:['spin','current','rho','clock'],kinetic:['spin','current','clock']};
   const descriptions={
     vlasov:'A self-gravitating collisionless shell evolved from constrained initial data. Scrub time to examine the changing matter and clock-rate profiles.',
     cluster:'Circular particle orbits support a static shell around a flat cavity. The shell has tangential pressure and a vacuum Schwarzschild exterior.',
-    rotation:'A small azimuthal shift is prescribed inside the dense part of the static wall. The momentum-density field changes sign across the wall, with zero total angular momentum.'
+    rotation:'A small azimuthal shift is prescribed inside the dense part of the static wall. The momentum-density field changes sign across the wall, with zero total angular momentum.',
+    kinetic:'A collisionless shell with oppositely biased orbit populations. The first-order matter currents cancel the exterior angular momentum while inertial frames still rotate inside.'
   };
   const limits={
     vlasov:'This short spherical pilot cannot test nonspherical modes or establish long-term stability. A flat cavity clock deficit describes gravitational time dilation.',
     cluster:'The circular-orbit source is an idealization with zero radial pressure. The comparison between cavity and distant clocks is normalized at infinity.',
-    rotation:'The shift is a stationary metric hypothesis. The displayed momentum is the constraint value in the equatorial plane. A self-consistent rotating particle distribution has yet to be constructed.'
+    rotation:'The shift is a stationary metric hypothesis. The displayed momentum is the constraint value in the equatorial plane. A self-consistent rotating particle distribution has yet to be constructed.',
+    kinetic:'The kinetic current sources the shift at first order. The model omits second-order changes to the wall geometry, stability and nonlinear exterior multipoles.'
   };
   const map=find('map'), profile=find('profile'), history=find('history');
   const image=document.createElement('canvas');
@@ -32,13 +35,14 @@
   function value(row,key){
     return key==='clock'?1-row[1]:row[fields[key][2]];
   }
+  const staticProfiles={cluster:data.static,rotation:data.rotation,kinetic:kinetic.profile};
   const fieldExtent={};
   for(const [mode,keys] of Object.entries(options)){
     fieldExtent[mode]={};
     for(const key of keys){
       let hi=0,lo=0;
-      const profiles=mode==='vlasov'?data.runs.flatMap(r=>r.frames.map(f=>f.profile)):[data[mode==='cluster'?'static':'rotation']];
-      const maxRadius=mode==='vlasov'?4.4:1.6;
+      const profiles=mode==='vlasov'?data.runs.flatMap(r=>r.frames.map(f=>f.profile)):[staticProfiles[mode]];
+      const maxRadius=['vlasov','kinetic'].includes(mode)?4.4:1.6;
       for(const rows of profiles){
         const visible=Math.ceil(maxRadius/data.outer*rows.length);
         for(let i=0;i<visible;i++){
@@ -149,9 +153,9 @@
     const mode=model.value, key=field.value, dynamic=mode==='vlasov';
     const selected=data.runs.find(x=>x.scale===Number(run.value));
     const snapshot=selected.frames[Number(frame.value)];
-    const rows=dynamic?snapshot.profile:data[mode==='cluster'?'static':'rotation'];
-    const [lo,hi]=fieldExtent[mode][key], radius=dynamic?4.4:1.6;
-    const bounds=dynamic?[snapshot.inner,snapshot.outer]:[.8,1.2];
+    const rows=dynamic?snapshot.profile:staticProfiles[mode];
+    const [lo,hi]=fieldExtent[mode][key], radius=dynamic||mode==='kinetic'?4.4:1.6;
+    const bounds=dynamic?[snapshot.inner,snapshot.outer]:mode==='kinetic'?kinetic.bounds:[.8,1.2];
     drawMap(rows,key,radius,Math.max(Math.abs(lo),hi),bounds);
     const {ctx,x,y}=graph(profile,[0,radius],hi===lo?[0,1]:[lo,hi],'r / ℓ',fields[key][1]);
     const points=Array.from({length:161},(_,i)=>{
@@ -168,6 +172,9 @@
         (snapshot.deficit*100).toFixed(3)+'% · Max. ADM drift '+selected.maxDrift.toExponential(2);
       find('time-out').textContent=snapshot.t.toFixed(0)+' ℓ';
       drawHistory(snapshot.t);
+    }else if(mode==='kinetic'){
+      find('readout').textContent='Cavity shift '+kinetic.cavityBeta.toExponential(3)+' ℓ⁻¹ · Peak guided-light delay '+
+        (kinetic.peakDelay*1e12).toFixed(2)+' ps at a 10 m midpoint radius';
     }else{
       find('readout').textContent='Cavity clock deficit '+(data.deficit*100).toFixed(3)+'% · ADM mass '+
         data.mass.toFixed(3)+' ℓ'+(mode==='rotation'?' · Shift amplitude ε = '+data.epsilon:'');
