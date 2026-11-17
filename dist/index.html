@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="An interactive general relativity laboratory for exploring warp metrics and null geodesics.">
+<title>Warp Photon Wind Tunnel Simulator</title>
+<link rel="stylesheet" href="style.css">
+<script defer src="physics.js"></script>
+<script defer src="app.js"></script>
+</head>
+<body>
+<header class="top"><div class="brand"><span class="mark" aria-hidden="true">◎</span> Warp Photon Wind Tunnel Simulator</div><nav aria-label="Main"><a href="#tunnel">Simulator</a><a href="#research">Research library ↗</a></nav></header>
+<main>
+<section class="intro" id="tunnel">
+  <div class="eyebrow"><span></span> GENERAL RELATIVITY LAB</div>
+  <h1>Warp Photon Wind Tunnel Simulator<span>.</span></h1>
+  <p>Explore how prescribed spacetime geometries bend light and what stress–energy their walls require.</p>
+</section>
+<div class="lab">
+<aside class="controls" aria-label="Simulation controls">
+  <h2>Configuration</h2>
+  <label for="model">Spacetime model</label>
+  <select id="model"><option value="alcubierre">Alcubierre bubble</option><option value="natario">Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Static matter shell</option><option value="flat">Minkowski control</option></select>
+  <label class="check compare-toggle"><input id="compare" type="checkbox"> Compare two models</label>
+  <div id="comparison-controls" hidden>
+    <label for="second-model">Comparison model</label>
+    <select id="second-model"><option value="alcubierre">Alcubierre bubble</option><option value="natario" selected>Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Static matter shell</option><option value="flat">Minkowski control</option></select>
+    <p id="comparison-note">Both views use the same coordinates, field scale, and photon launches.</p>
+  </div>
+  <p id="model-note"></p>
+  <div class="parameters">
+    <div id="speed-row"><label for="speed">Bubble speed <output id="speed-out"></output></label><input id="speed" type="range" min="0" max="2" step=".01" value=".65"></div>
+    <div id="radius-row"><label for="radius">Bubble radius <output id="radius-out"></output></label><input id="radius" type="range" min="1.2" max="3" step=".05" value="2.1"></div>
+    <div id="width-row"><label for="width">Wall scale <output id="width-out"></output></label><input id="width" type="range" min=".18" max=".8" step=".01" value=".37"></div>
+    <div id="compactness-row" hidden><label for="compactness">Compactness 2M/R <output id="compactness-out"></output></label><input id="compactness" type="range" min=".02" max=".65" step=".01" value=".4"></div>
+  </div>
+  <label class="check"><input id="rays" type="checkbox" checked> Trace photon paths</label>
+  <label class="check"><input id="grid" type="checkbox" checked> Show coordinate grid</label>
+  <button class="reset" id="reset" type="button">↺ &nbsp; Reset configuration</button>
+</aside>
+<section class="instrument" aria-label="Field viewport">
+  <div class="instrument-head"><div><span class="eyebrow">MERIDIONAL SLICE</span><h2>Spacetime cross-section</h2></div><button id="pause" type="button" aria-pressed="false">Ⅱ &nbsp; Pause</button></div>
+  <div class="layers" role="group" aria-label="Field layer">
+    <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Shift speed</button><button data-field="nec" aria-pressed="false">Local NEC</button>
+  </div>
+  <div class="plots" id="plots"></div>
+  <div class="legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
+  <p class="launch-note" id="launch-note" hidden></p>
+</section>
+</div>
+<template id="plot-template">
+  <section class="plot">
+    <h3 data-role="title" hidden></h3>
+    <div class="viewport"><canvas role="img"></canvas><span class="slice">z = 0</span></div>
+    <div class="readouts">
+      <div><span>MIN. EULERIAN DENSITY</span><strong data-role="density"></strong><small>Visible slice · ℓ⁻²</small></div>
+      <div><span>ENERGY CONDITION</span><strong data-role="condition"></strong><small data-role="condition-note"></small></div>
+      <div><span>RAY INTEGRATION</span><strong data-role="integration"></strong><small>Max. normalized Hamiltonian drift</small></div>
+    </div>
+  </section>
+</template>
+<section class="notebook" aria-label="Simulation notes">
+<details open><summary>Model equations and interpretation</summary><div id="equations"></div><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
+</section>
+<section id="research" class="research">
+  <div class="eyebrow"><span></span> REFERENCES</div><h2>Research library</h2>
+  <p>Compare the simulated metrics with published proposals, recent preprints, and open numerical toolkits.</p>
+  <div id="papers"></div>
+</section>
+</main>
+<footer>Warp Photon Wind Tunnel Simulator <span>Classical general relativity · literature reviewed November 2026</span></footer>
+</body>
+</html>
