@@ -102,3 +102,24 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 30px;disp
 .editor-actions button[type="submit"]{color:var(--mint);border-color:#527e7c}
 #equation-status:empty{display:none}
 #equation-status.error{color:#ffc0bd}
+.research-lab{scroll-margin-top:16px;border-top:1px solid var(--line);padding:24px 0 30px;margin-bottom:22px}
+.research-lab h2{font-size:clamp(1.7rem,4vw,2.55rem);letter-spacing:-.055em}
+.research-lab h3{font-size:.96rem;margin:4px 0 7px}
+.research-lab p{color:var(--muted);font-size:.9rem;margin:9px 0}
+.shell-controls,.shell-links,.shell-time,.shell-scale,.shell-traces{display:flex;flex-wrap:wrap;align-items:center;gap:8px 15px}
+.shell-controls{margin:12px 0}
+.shell-controls label{display:grid;gap:4px;font-size:.82rem}
+.shell-controls select{padding:7px 9px;color:var(--white);background:var(--panel);border:1px solid #394764;border-radius:7px}
+.shell-plots{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.shell-plots>div{min-width:0}
+.research-lab canvas{background:#080f1c;border:1px solid var(--line);border-radius:8px;aspect-ratio:1.65}
+#shell-history{aspect-ratio:4;min-height:175px}
+.shell-scale,.shell-readout,.shell-traces{font:400 .75rem var(--mono);color:var(--muted);margin-top:9px}
+#shell-gradient{width:105px;height:8px;border:1px solid #506078;border-radius:5px}
+.shell-time{margin:13px 0 8px}
+.shell-time label{flex:1;min-width:160px;font-size:.85rem}
+.shell-traces span:nth-child(1){color:#75e6d7}
+.shell-traces span:nth-child(2){color:#c0cbe2}
+.shell-traces span:nth-child(3){color:#f1a2ed}
+.shell-links{font-size:.87rem;margin-top:10px}
+@media(max-width:680px){.shell-plots{grid-template-columns:1fr}.shell-controls label{flex:1;min-width:150px}.top nav{white-space:normal;line-height:1.2}}

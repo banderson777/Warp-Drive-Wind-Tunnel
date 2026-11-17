@@ -9,9 +9,11 @@
 <script defer src="equations.js"></script>
 <script defer src="physics.js"></script>
 <script defer src="app.js"></script>
+<script defer src="research-data.js"></script>
+<script defer src="research-view.js"></script>
 </head>
 <body>
-<header class="top"><div class="brand"><span class="mark" aria-hidden="true">◎</span> Warp Photon Wind Tunnel Simulator</div><nav aria-label="Main"><a href="#tunnel">Simulator</a><a href="#research">Research library ↗</a></nav></header>
+<header class="top"><div class="brand"><span class="mark" aria-hidden="true">◎</span> Warp Photon Wind Tunnel Simulator</div><nav aria-label="Main"><a href="#tunnel">Simulator</a><a href="#research-lab">Shell experiments</a></nav></header>
 <main>
 <section class="intro" id="tunnel">
   <div class="eyebrow"><span></span> GENERAL RELATIVITY LAB</div>
@@ -90,6 +92,45 @@
 </section>
 <section class="notebook" aria-label="Simulation notes">
 <details open id="model-notes"><summary>Model equations and sources</summary><div id="equations"></div><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
+</section>
+<section id="research-lab" class="research-lab" aria-labelledby="shell-title">
+  <div class="eyebrow"><span></span> GENERAL RELATIVITY RESEARCH</div>
+  <h2 id="shell-title">Shell experiments</h2>
+  <div class="shell-controls">
+    <label for="shell-model">Research model<select id="shell-model">
+      <option value="vlasov">Evolving Einstein–Vlasov shell</option>
+      <option value="cluster">Static Einstein cluster</option>
+      <option value="rotation">Localized rotational shift</option>
+    </select></label>
+    <label id="shell-run-label" for="shell-run">Initial perturbation<select id="shell-run">
+      <option value="0.98">2% compression</option>
+      <option value="1">Unperturbed control</option>
+      <option value="1.02">2% expansion</option>
+    </select></label>
+    <label for="shell-field">Field<select id="shell-field"></select></label>
+  </div>
+  <p id="shell-description"></p>
+  <div class="shell-plots">
+    <div><h3>Equatorial slice</h3><canvas id="shell-map" role="img" aria-label="Equatorial slice of the selected shell field"></canvas></div>
+    <div><h3>Radial profile</h3><canvas id="shell-profile" role="img" aria-label="Radial profile of the selected shell field"></canvas></div>
+  </div>
+  <div class="shell-scale"><span id="shell-low"></span><span id="shell-gradient"></span><span id="shell-high"></span><span id="shell-units"></span></div>
+  <p class="shell-readout" id="shell-readout"></p>
+  <div id="shell-evolution">
+    <div class="shell-time">
+      <button id="shell-play" type="button">Play</button>
+      <label for="shell-frame">Time <output id="shell-time-out"></output><input id="shell-frame" type="range" min="0" max="0" step="1" value="0"></label>
+    </div>
+    <h3>Rest-mass-weighted mean radius</h3>
+    <canvas id="shell-history" role="img" aria-label="Mean shell radius versus time for compressed, control and expanded runs"></canvas>
+    <div class="shell-traces"><span>−2% compression</span><span>Control</span><span>+2% expansion</span><small>Solid: fine grid · Dashed: coarse grid</small></div>
+  </div>
+  <p id="shell-limits"></p>
+  <div class="shell-links">
+    <a href="https://github.com/banderson777/Warp-Photon-Wind-Tunnel-Simulator/blob/main/research/positive_energy_shell.md">Static and rotation derivations ↗</a>
+    <a href="https://github.com/banderson777/Warp-Photon-Wind-Tunnel-Simulator/blob/main/research/vlasov_evolution.md">Evolution method and results ↗</a>
+    <a href="#research">Research library ↓</a>
+  </div>
 </section>
 <section id="research" class="research">
   <div class="eyebrow"><span></span> REFERENCES</div><h2>Research library</h2>

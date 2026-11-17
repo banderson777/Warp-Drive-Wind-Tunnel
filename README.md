@@ -47,3 +47,11 @@ Choose **Edit equations** to load an editable copy of the active model, or selec
 Try `exp(-(r/R)^2)` in the axial shift family for a Gaussian profile. Expressions use `r` (coordinate radius), `R` (radius slider), `w` (wall scale), `v` (speed), `C` (compactness), and `pi`. Use explicit multiplication and `^` for powers. The in-app syntax guide lists supported functions. Expressions are parsed as math.
 
 The editor supports radial functions within the four implemented metric families. Derivatives are estimated with finite differences. The engine checks sampled values and the required metric signature where it evaluates the geometry. Very narrow features can be under-resolved, and sampled diagnostics cannot certify energy conditions or physical realizability.
+
+## Shell experiments
+
+Open **Shell experiments** to visualize three research cases. Inspect the static Einstein cluster, the prescribed localized rotational shift, or an evolving collisionless shell. Scrub time for the ±2% radial perturbations and the control, compare both numerical resolutions in the radius history, and switch among density, clock deficit, pressure, and rotational fields where applicable.
+
+- [Source-first shell and rotation study](research/positive_energy_shell.md)
+- [Matter-sourced equilibrium and radial perturbation](research/vlasov_equilibrium.md)
+- [Time evolution, numerical checks, and data regeneration](research/vlasov_evolution.md)
