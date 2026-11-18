@@ -175,3 +175,9 @@ Open **Model equations and sources** in the simulator for annotated references f
 | Natário bubble | [Zero-expansion construction](https://arxiv.org/abs/gr-qc/0110086) · [Null energy condition](https://arxiv.org/abs/2105.03079) · [Negative-energy bound, preprint](https://arxiv.org/abs/2609.36211) |
 | Van Den Broeck pocket | [Original pocket geometry](https://arxiv.org/abs/gr-qc/9905084) · [Companion discussion](https://arxiv.org/abs/gr-qc/9906050) · [Observer-robust energy checks, preprint](https://arxiv.org/abs/2602.18023) |
 | Static matter shell | [Spherical metric and stress–energy, Section III](https://epizodyspace.ru/bibl/inostr-yazyki/ajph/1988/morris_thorne.pdf) · [Subluminal shell theory](https://arxiv.org/abs/2102.06824) · [Related moving-shell proposal](https://arxiv.org/abs/2405.02709) |
+
+### Second-order counterrotation response
+
+In **Shell experiments**, choose **Second order · Fixed particle rest mass** or **Second order · Fixed central cutoff parameter**. Both cases share a scale for **Lapse-deficit change** and **Enclosed mass change**. These are spherical-average corrections to the reference Einstein–Vlasov shell at bias amplitude 0.02. The two constraints give opposite signs for the small center-clock correction. The quadrupole response remains open.
+
+Run `python3 -B research/vlasov_second_order.py dist/research-second-order.js` to reproduce the calculation and regenerate its display data. [Equations, checks, and results](research/vlasov_second_order.md)

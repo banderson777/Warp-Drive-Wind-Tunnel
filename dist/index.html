@@ -17,6 +17,7 @@
 <script defer src="app.js"></script>
 <script defer src="research-data.js"></script>
 <script defer src="research-rotation.js"></script>
+<script defer src="research-second-order.js"></script>
 <script defer src="research-view.js"></script>
 <script defer src="lab-optics.js"></script>
 <script defer src="lab-tools.js"></script>
@@ -212,6 +213,8 @@
       <option value="cluster">Static Einstein cluster</option>
       <option value="rotation">Localized rotational shift</option>
       <option value="kinetic">Matter-sourced counterrotation</option>
+      <option value="second-rest">Second order · Fixed particle rest mass</option>
+      <option value="second-center">Second order · Fixed central cutoff parameter</option>
     </select></label>
     <label id="shell-run-label" for="shell-run">Initial perturbation<select id="shell-run">
       <option value="0.98">2% compression</option>
@@ -222,7 +225,7 @@
   </div>
   <p id="shell-description"></p>
   <div class="shell-plots">
-    <div><h3>Equatorial slice</h3><canvas id="shell-map" role="img" aria-label="Equatorial slice of the selected shell field"></canvas></div>
+    <div><h3 id="shell-map-title">Equatorial slice</h3><canvas id="shell-map" role="img" aria-label="Equatorial slice of the selected shell field"></canvas></div>
     <div><h3>Radial profile</h3><canvas id="shell-profile" role="img" aria-label="Radial profile of the selected shell field"></canvas></div>
   </div>
   <div class="shell-scale"><span id="shell-low"></span><span id="shell-gradient"></span><span id="shell-high"></span><span id="shell-units"></span></div>
@@ -241,6 +244,7 @@
     <a href="https://github.com/banderson777/Warp-Drive-Wind-Tunnel/blob/main/research/positive_energy_shell.md">Static and rotation derivations ↗</a>
     <a href="https://github.com/banderson777/Warp-Drive-Wind-Tunnel/blob/main/research/vlasov_evolution.md">Evolution method and results ↗</a>
     <a href="https://github.com/banderson777/Warp-Drive-Wind-Tunnel/blob/main/research/vlasov_rotation.md">Counterrotation calculation ↗</a>
+    <a href="https://github.com/banderson777/Warp-Drive-Wind-Tunnel/blob/main/research/vlasov_second_order.md">Second-order calculation ↗</a>
     <a href="#research">Research library ↓</a>
   </div>
 </section>

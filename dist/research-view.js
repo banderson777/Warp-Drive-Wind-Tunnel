@@ -2,6 +2,9 @@
 (() => {
   const data=globalThis.WarpResearchData;
   const kinetic=globalThis.WarpKineticRotation;
+  const response=globalThis.WarpSecondOrder;
+  const secondOrder={'second-rest':response.fixedRestMass,'second-center':response.fixedCentralY};
+  const radialExtent=mode=>mode==='vlasov' || mode==='kinetic' || secondOrder[mode]?4.4:1.6;
   const find=id=>document.getElementById('shell-'+id);
   const model=find('model'), run=find('run'), field=find('field'), frame=find('frame');
   const beamColors=['#75e6d7','#c0cbe2','#f1a2ed'];
@@ -11,20 +14,27 @@
     pr:['Radial pressure pᵣ','ℓ⁻²',2],
     pt:['Tangential pressure pₜ','ℓ⁻²',3],
     spin:['Azimuthal shift βφ','ℓ⁻¹',4],
-    current:['Azimuthal momentum density j','ℓ⁻²',5]
+    current:['Azimuthal momentum density j','ℓ⁻²',5],
+    deltaClock:['Lapse-deficit change Δ(1 − N)','fraction',0],
+    deltaMass:['Enclosed mass change Δm','ℓ',1]
   };
-  const options={vlasov:['rho','clock','pr','pt'],cluster:['rho','clock','pt'],rotation:['spin','current','rho','clock'],kinetic:['spin','current','clock']};
+  const options={vlasov:['rho','clock','pr','pt'],cluster:['rho','clock','pt'],rotation:['spin','current','rho','clock'],kinetic:['spin','current','clock'],
+    'second-rest':['deltaClock','deltaMass'],'second-center':['deltaClock','deltaMass']};
   const descriptions={
     vlasov:'A self-gravitating collisionless shell evolved from constrained initial data. Scrub time to examine the changing matter and clock-rate profiles.',
     cluster:'Circular particle orbits support a static shell around a flat cavity. The shell has tangential pressure and a vacuum Schwarzschild exterior.',
     rotation:'A small azimuthal shift is prescribed inside the dense part of the static wall. The momentum-density field changes sign across the wall, with zero total angular momentum.',
-    kinetic:'A collisionless shell with oppositely biased orbit populations. The first-order matter currents cancel the exterior angular momentum while inertial frames still rotate inside.'
+    kinetic:'A collisionless shell with oppositely biased orbit populations. The first-order matter currents cancel the exterior angular momentum while inertial frames still rotate inside.',
+    'second-rest':'Spherical-average mass and lapse corrections at second order, with total particle rest mass held fixed.',
+    'second-center':'Spherical-average mass and lapse corrections at second order, with the central cutoff parameter held fixed. Total particle rest mass can change.'
   };
   const limits={
     vlasov:'This short spherical pilot cannot test nonspherical modes or establish long-term stability. A flat cavity clock deficit describes gravitational time dilation.',
     cluster:'The circular-orbit source is an idealization with zero radial pressure. The comparison between cavity and distant clocks is normalized at infinity.',
     rotation:'The shift is a stationary metric hypothesis. The displayed momentum is the constraint value in the equatorial plane. A self-consistent rotating particle distribution has yet to be constructed.',
-    kinetic:'The kinetic current sources the shift at first order. The model omits second-order changes to the wall geometry, stability and nonlinear exterior multipoles.'
+    kinetic:'The kinetic current sources the shift at first order. The separate second-order views show the spherical-average response. Stability and exterior multipoles remain open.',
+    'second-rest':'The projection includes only the spherical average. The quadrupole forcing is nonzero and its exterior field is still unknown.',
+    'second-center':'The projection includes only the spherical average. Compare this response with the fixed-particle-rest-mass case on the same field scale.'
   };
   const map=find('map'), profile=find('profile'), history=find('history');
   const image=document.createElement('canvas');
@@ -35,14 +45,16 @@
   function value(row,key){
     return key==='clock'?1-row[1]:row[fields[key][2]];
   }
-  const staticProfiles={cluster:data.static,rotation:data.rotation,kinetic:kinetic.profile};
+  const staticProfiles={cluster:data.static,rotation:data.rotation,kinetic:kinetic.profile,
+    'second-rest':secondOrder['second-rest'].profile,'second-center':secondOrder['second-center'].profile};
   const fieldExtent={};
   for(const [mode,keys] of Object.entries(options)){
     fieldExtent[mode]={};
     for(const key of keys){
       let hi=0,lo=0;
-      const profiles=mode==='vlasov'?data.runs.flatMap(r=>r.frames.map(f=>f.profile)):[staticProfiles[mode]];
-      const maxRadius=['vlasov','kinetic'].includes(mode)?4.4:1.6;
+      const profiles=mode==='vlasov'?data.runs.flatMap(r=>r.frames.map(f=>f.profile)):
+        secondOrder[mode]?Object.values(secondOrder).map(result=>result.profile):[staticProfiles[mode]];
+      const maxRadius=radialExtent(mode);
       for(const rows of profiles){
         const visible=Math.ceil(maxRadius/data.outer*rows.length);
         for(let i=0;i<visible;i++){
@@ -154,8 +166,9 @@
     const selected=data.runs.find(x=>x.scale===Number(run.value));
     const snapshot=selected.frames[Number(frame.value)];
     const rows=dynamic?snapshot.profile:staticProfiles[mode];
-    const [lo,hi]=fieldExtent[mode][key], radius=dynamic||mode==='kinetic'?4.4:1.6;
-    const bounds=dynamic?[snapshot.inner,snapshot.outer]:mode==='kinetic'?kinetic.bounds:[.8,1.2];
+    const [lo,hi]=fieldExtent[mode][key], radius=radialExtent(mode);
+    const bounds=dynamic?[snapshot.inner,snapshot.outer]:secondOrder[mode]?response.bounds:
+      mode==='kinetic'?kinetic.bounds:[.8,1.2];
     drawMap(rows,key,radius,Math.max(Math.abs(lo),hi),bounds);
     const {ctx,x,y}=graph(profile,[0,radius],hi===lo?[0,1]:[lo,hi],'r / ℓ',fields[key][1]);
     const points=Array.from({length:161},(_,i)=>{
@@ -172,6 +185,10 @@
         (snapshot.deficit*100).toFixed(3)+'% · Max. ADM drift '+selected.maxDrift.toExponential(2);
       find('time-out').textContent=snapshot.t.toFixed(0)+' ℓ';
       drawHistory(snapshot.t);
+    }else if(secondOrder[mode]){
+      const result=secondOrder[mode];
+      find('readout').textContent='Center clock deficit change '+fmt(result.cavityDeficitChange)+
+        ' · ADM mass change '+fmt(result.admChange)+' ℓ · Bias amplitude η = '+response.eta;
     }else if(mode==='kinetic'){
       find('readout').textContent='Cavity shift '+kinetic.cavityBeta.toExponential(3)+' ℓ⁻¹ · Peak guided-light delay '+
         (kinetic.peakDelay*1e12).toFixed(2)+' ps at a 10 m midpoint radius';
@@ -179,7 +196,7 @@
       find('readout').textContent='Cavity clock deficit '+(data.deficit*100).toFixed(3)+'% · ADM mass '+
         data.mass.toFixed(3)+' ℓ'+(mode==='rotation'?' · Shift amplitude ε = '+data.epsilon:'');
     }
-    map.setAttribute('aria-label',fields[key][0]+' equatorial slice for '+model.selectedOptions[0].textContent);
+    map.setAttribute('aria-label',fields[key][0]+(secondOrder[mode]?' spherical-average slice for ':' equatorial slice for ')+model.selectedOptions[0].textContent);
     profile.setAttribute('aria-label',fields[key][0]+' radial profile for '+model.selectedOptions[0].textContent);
   }
   function changeModel(){
@@ -188,6 +205,7 @@
     field.replaceChildren(...options[mode].map(key=>new Option(fields[key][0],key)));
     find('run-label').hidden=!dynamic;
     find('evolution').hidden=!dynamic;
+    find('map-title').textContent=secondOrder[mode]?'Spherical-average field':'Equatorial slice';
     find('description').textContent=descriptions[mode];
     find('limits').textContent=limits[mode];
     draw();
