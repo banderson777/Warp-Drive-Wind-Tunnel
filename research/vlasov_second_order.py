@@ -1,6 +1,6 @@
 """Spherically averaged O(eta^2) response of the kinetic counterrotating shell."""
 from bisect import bisect_right
-from math import cos, exp, expm1, pi, sqrt
+from math import cos, exp, expm1, fsum, log, pi, sqrt
 import json
 from pathlib import Path
 import sys
@@ -161,7 +161,7 @@ def direct_equatorial(r,y,N,E0,beta,kappa,eta,n=32):
     floor=L0/r**2
     cap=exp(y)
     reference_max=sqrt(expm1(2*y)-floor)
-    totals=[0.]*3
+    directions=[[],[],[]]
     angular=n//2
     for j in range(n+1):
         cosine=j/n
@@ -173,45 +173,55 @@ def direct_equatorial(r,y,N,E0,beta,kappa,eta,n=32):
                 energy=sqrt(1+p2)
                 L=r*r*tangential
                 shift=eta*beta*sqrt(L)*c
-                return (N*energy-E0-shift,energy,L)
+                return (N*(s-reference_max)*(s+reference_max)/(energy+cap)-shift,energy,L)
             lo,hi=0.,2*reference_max
             assert particle(lo)[0]<0<particle(hi)[0]
-            for _ in range(45):
+            while True:
                 mid=(lo+hi)/2
+                if mid==lo or mid==hi:
+                    break
                 if particle(mid)[0]<0:
                     lo=mid
                 else:
                     hi=mid
             upper=(lo+hi)/2
+            radial_terms=[[],[],[]]
             for i in range(1,n):  # The integrand is zero at both endpoints.
                 s=upper*i/n
                 difference,energy,L=particle(s)
                 factor=(1+eta*(L/(L+3*L0)-kappa)*c)
                 weight=4*pi*s*s*(-difference/E0)*factor*simpson(i,n)*simpson(j,n)*upper/(9*n*n*angular)
                 for k,value in enumerate((energy,(s*cosine)**2/energy,1.)):
-                    totals[k]+=weight*value
-    return totals
+                    radial_terms[k].append(weight*value)
+            for k in range(3):
+                directions[k].append(fsum(radial_terms[k]))
+    return [fsum(terms) for terms in directions]
 
 
 def check_distribution():
     rotation=experiment(400,24)
-    r,N,beta,_,_=rotation["rows"][100]
-    E0=rotation["rows"][-1][1]*sqrt(1+L0/rotation["rows"][-1][0]**2)
-    beta/=rotation["eta"]
-    kappa=rotation["kappa"]
-    from math import log
-    y=log(E0/N)
-    _,forcing=coefficients(r,y,N,E0,beta,kappa,40)
-    amplitude=.20
-    base=direct_equatorial(r,y,N,E0,beta,kappa,0.)
-    positive=direct_equatorial(r,y,N,E0,beta,kappa,amplitude)
-    negative=direct_equatorial(r,y,N,E0,beta,kappa,-amplitude)
-    errors=[]
-    for zero,plus,minus,predicted in zip(base,positive,negative,forcing):
-        measured=(plus+minus-2*zero)/(2*amplitude**2)*(2/3)
-        errors.append(abs(measured/predicted-1))
-    print('Direct displaced-cutoff moment relative errors:',errors,flush=True)
-    assert max(errors)<.002
+    rows=rotation["rows"]
+    outer,N_outer,*_=rows[-1]
+    E0=N_outer*sqrt(1+L0/outer**2)
+    for index in (20,100,200,300,380):
+        r,N,beta,*_=rows[index]
+        args=(r,log(E0/N),N,E0,beta/rotation["eta"],rotation["kappa"])
+        _,forcing=coefficients(*args,80)
+        for n in (32,64):
+            static=direct_equatorial(*args,0.,n)
+            for amplitude in (.02,.20):
+                plus=direct_equatorial(*args,amplitude,n)
+                minus=direct_equatorial(*args,-amplitude,n)
+                # The quadratic angular dependence is sin²(theta), whose
+                # spherical average is 2/3 of the equatorial coefficient.
+                errors=[]
+                for zero,p,m,target in zip(static,plus,minus,forcing):
+                    inferred=fsum([p,m,-2*zero])/(3*amplitude**2)
+                    errors.append(abs(inferred/target-1))
+                print(f"wall {index/400:.0%} eta {amplitude:.2f} n {n}: "
+                      + " ".join(f"{e:.7%}" for e in errors),flush=True)
+                if n==64:
+                    assert max(errors)<2e-4, (r,amplitude,errors)
 
 
 def main():

@@ -38,7 +38,21 @@ Holding the first- and second-order grids at 800 radial intervals and 40 momentu
 | Center clock deficit change, fixed particle rest mass | 0.00004184% | 0.00011258% | 0.00007074% |
 
 Both clock corrections retain their signs throughout. For the fixed-rest-mass clock, the separate refinements shift the answer in opposite directions, which explains the smaller combined difference. The table measures sensitivity to discretization at this equilibrium. The spherical projection and truncation at second order are shared by every run; errors from those assumptions require separate physical calculations.
- A direct finite-bias integration of the displaced energy cutoff independently reproduced the second-order density, radial pressure, and particle-rest-density source terms at a wall point within 0.005%. An independent four-dimensional curvature calculation checked the signs of the shift contributions to the energy density and radial stress.
+### Finite-bias matter check across the wall
+
+We integrated the local distribution with its displaced energy cutoff at five interior radii. The wall fraction is $(r-a)/(b-a)$, where $a$ and $b$ are the static shell boundaries. At each radius we computed equatorial energy density, radial pressure and particle rest density at zero and opposite signed biases. Dividing the even difference by twice the squared bias estimates the equatorial quadratic coefficient. Multiplying by $2/3$ gives the predicted spherical-average coefficient for a quadratic source proportional to $\sin^2\theta$.
+
+| Wall fraction | Maximum relative discrepancy at bias 0.02 | At bias 0.20 |
+| --- | ---: | ---: |
+| 5% | 0.000024% | 0.000022% |
+| 25% | 0.000311% | 0.000286% |
+| 50% | 0.000398% | 0.000371% |
+| 75% | 0.000535% | 0.000551% |
+| 95% | 0.004230% | 0.000030% |
+
+Entries are rounded upward across the three moments at direct quadrature resolution 64. The script also runs resolution 32 and evaluates the predicted coefficients separately at 80 subdivisions. At 95% of the wall and bias 0.02, the density signal is only a few parts in a trillion of the background. Increasing quadrature resolution there does not consistently improve the relative difference: extracting the coefficient requires subtracting nearly equal moments. The larger test bias amplifies the signal.
+
+Both tests hold the background and first-order shift profile fixed. They check the direct kinetic source in the interior of the wall. Neither the moving support boundaries nor a finite-bias solution of the coupled Einstein–Vlasov equations is determined by this comparison. The separate four-dimensional curvature check tests the signs of the geometric contributions.
 
 ## Projected equations
 
