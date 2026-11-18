@@ -5,12 +5,12 @@ from vlasov_rotation import experiment
 from vlasov_shell import L0
 
 
-def cavity_moments(model, eta, n, polar_min=0.):
-    """Rest mass and its P2-weighted integral, folded across the equator."""
+def cavity_integrals(model, eta, n, polar_min=0.):
+    """Rest mass, its P2 moment and signed particle angular momentum."""
     a, lapse, reference_shift, _, _ = model["rows"][0]
     shift = reference_shift * eta / model["eta"]
     if shift == 0:
-        return 0., 0.
+        return 0., 0., 0.
     floor = sqrt(L0)
     t0 = floor/a
     cap = sqrt(1+t0*t0)
@@ -19,6 +19,7 @@ def cavity_moments(model, eta, n, polar_min=0.):
     points = [(i+.5)/n for i in range(n)]
     total = 0.
     weighted = 0.
+    angular_momentum = 0.
     span = pi/2-polar_min
     for polar in points:
         theta = polar_min+span*polar
@@ -50,15 +51,24 @@ def cavity_moments(model, eta, n, polar_min=0.):
                     pmax = sqrt(pmax2)
                     L = (r*t)**2
                     bias = 1+eta*(L/(L+3*L0)-model["kappa"])*projection
+                    specific_lz = r*t*projection
+                    radial_sum = 0.
                     for radial in points:
                         energy = sqrt(1+t*t+pmax2*radial*radial)
                         # Rationalized 1-E/E0 at p_r = radial*pmax.
                         f = bias*pmax2*(1-radial**2)/(cap*(cap+k*t+energy))
-                        ring += r*r*sine*depth*t*width*pmax*f
+                        radial_sum += f
+                    cell = r*r*sine*depth*t*width*pmax*radial_sum
+                    ring += cell
+                    angular_momentum += specific_lz*cell
         total += ring
         weighted += ring*(3*cos(theta)**2-1)/2
     scale = 16*pi*(pi/2)*span/n**5
-    return scale*total, scale*weighted
+    return scale*total, scale*weighted, scale*angular_momentum
+
+
+def cavity_moments(model, eta, n, polar_min=0.):
+    return cavity_integrals(model, eta, n, polar_min)[:2]
 
 
 def cavity_mass(model, eta, n):
@@ -87,7 +97,10 @@ if __name__ == "__main__":
     assert cavity_mass(model,0.,8)==0.
     for eta in (.005,.01,.02):
         coarse = cavity_mass(model,eta,12)
-        fine, weighted = cavity_moments(model,eta,20)
+        fine, weighted, spin = cavity_integrals(model,eta,20)
+        expected_specific = 9*sqrt(L0)/11
+        print(f"eta={eta}: matter J={spin:.10e} specific J={spin/fine:.10f}")
+        assert abs(spin/fine/expected_specific-1)<.0003
         print(f"eta={eta}: normalized P2={weighted/fine:.9f}")
         assert abs(weighted/fine+7/26)<.0002
         leading = leading_mass(model,eta)
@@ -95,7 +108,12 @@ if __name__ == "__main__":
               f"leading={leading:.9e} fine/leading={fine/leading:.7f}",flush=True)
         assert abs(coarse/fine-1)<.006 and abs(fine/leading-1)<.006
     assert cavity_mass(model,-.02,12)==coarse
-    refined, weighted = cavity_moments(model,.02,32)
+    positive = cavity_integrals(model,.02,12)
+    negative = cavity_integrals(model,-.02,12)
+    assert positive[:2]==negative[:2] and positive[2]==-negative[2]
+    refined, weighted, refined_spin = cavity_integrals(model,.02,32)
+    print(f"eta=.02 n=32: matter J={refined_spin:.10e} specific J={refined_spin/refined:.10f}")
+    assert abs(spin/refined_spin-1)<.001
     print(f"eta=0.02 n=32: {refined:.10e}, change from n=20: {abs(fine/refined-1):.5%}")
     assert abs(fine/refined-1)<.001
     leading_belt = leading_belt_fraction()

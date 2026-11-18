@@ -126,6 +126,27 @@ $$
 
 The numerical check weights each finite-bias phase-space ring directly for $P_2$, and integrates the belt on a separate grid whose boundary falls exactly at 30° latitude. These observables describe particle rest mass inside the original cavity. An exterior gravitational quadrupole would also depend on the shell wall, stresses, and metric response.
 
+### Signed particle angular momentum in the inner layer
+
+For the same unit-rest-mass particles, integrate $J_{\rm in}=\int_{r<a} L_z f\,d^3p\,dV$. Here $L_z=r t\sin\theta\cos\psi$ in the positive-shift convention, with $t$ the magnitude of the physical tangential momentum. In the old cavity the static minimum energy already exceeds the cutoff. The term $-\beta_c L_z$ can lower it only for particles with $\beta_c L_z>0$. Reversing the bias therefore changes the sign of the layer’s angular momentum.
+
+The leading prediction for angular momentum per admitted rest mass has no unknown normalization. Write $u=\sin\theta\cos\psi$ on the folded favorable directions. The leading mass weight is $u^{7/2}$ and $r t\to\sqrt{L_0}$ at the cutoff. For the folded angular integral,
+
+$$
+I_k=\int_0^{\pi/2}\sin^{k+1}\theta\,d\theta
+\int_0^{\pi/2}\cos^k\psi\,d\psi=\frac{\pi}{2(k+1)} .
+$$
+
+Consequently $J_{\rm in}/M_{\rm in}$ approaches $\operatorname{sgn}(\beta_c)\sqrt{L_0}\,I_{9/2}/I_{7/2}=\operatorname{sgn}(\beta_c)\,9\sqrt{L_0}/11$ at small nonzero bias. The magnitude of $J_{\rm in}$ scales as $|\eta|^{7/2}$ just as the admitted mass does.
+
+| Positive bias | $J_{\rm in}/M_{\rm in}$ (ℓ, 20 bins) |
+| ---: | ---: |
+| 0.005 | 0.25872599 |
+| 0.010 | 0.25872014 |
+| 0.020 | 0.25870842 |
+
+At bias 0.02 the 32-bin integral gives $J_{\rm in}=3.84573\times10^{-20}$ ℓ² and $J_{\rm in}/M_{\rm in}=0.25870840$ ℓ. The calculation weights each phase-space cell by its own signed $L_z$. The test compares three amplitudes against the analytic limit, repeats the reference at 32 bins, and checks that reversing the bias at matched resolution preserves the mass and reverses $J_{\rm in}$. This is the kinetic angular momentum of particles in one specified region of the frozen metric. The rest of the wall and its gravitational response are required to infer any change to the angular momentum measured at infinity.
+
 ## Reproduce and inspect
 
 Run `python3 -B research/vlasov_rotation.py dist/research-rotation.js` to repeat both resolutions and regenerate the display data. In **Shell experiments**, select **Matter-sourced counterrotation**. Switch between the azimuthal shift and signed azimuthal momentum density to see how the two current regions source the field.
