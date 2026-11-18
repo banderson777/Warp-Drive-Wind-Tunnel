@@ -127,3 +127,17 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 30px;disp
   .shell-controls label{flex:1 1 190px}
   .shell-controls select{width:100%;min-width:0}
 }
+.top nav{align-items:center}
+#open-help{white-space:nowrap}
+#sim-help{width:min(580px,calc(100% - 32px));max-height:calc(100% - 32px);padding:20px;color:var(--white);background:var(--panel);border:1px solid #405374;border-radius:14px}
+#sim-help::backdrop{background:rgba(5,9,17,.73)}
+.help-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.help-head h2{font-size:clamp(1.15rem,4vw,1.45rem)}
+#sim-help p,#sim-help dd{font-size:.92rem;color:var(--muted)}
+#sim-help dt{font-weight:700;margin-top:12px}
+#sim-help dd{margin:2px 0 0}
+.view-controls{display:flex;flex-wrap:wrap;gap:6px;padding:0 19px 9px}
+.view-controls button[aria-pressed=true]{border-color:#527e7c;color:var(--mint);background:#1a343c}
+.orbit canvas{touch-action:none;cursor:grab}
+.orbit canvas.dragging{cursor:grabbing}
+.orbit canvas:focus-visible{outline:2px solid var(--mint);outline-offset:-2px}

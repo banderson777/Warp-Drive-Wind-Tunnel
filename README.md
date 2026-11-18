@@ -57,3 +57,9 @@ Open **Shell experiments** to visualize three research cases. Inspect the static
 - [Time evolution, numerical checks, and data regeneration](research/vlasov_evolution.md)
 
 The **Matter-sourced counterrotation** mode solves for the first-order shift from a nonnegative kinetic distribution with compensating angular currents. [Derivation and reproduction instructions](research/vlasov_rotation.md)
+
+## Help and 3D view
+
+Open **Help** for an overview of the simulator and its controls. In the main viewport, choose **3D view** and drag with a mouse or one finger, or focus a plot and use the arrow keys. **Reset angle** restores the initial camera. Comparison panels share the camera.
+
+The mesh is a reference-radius surface colored by the selected field. The photon bundle rotates selected numerical meridional paths around the model's symmetry axis. The energy and integration readouts still summarize the original slice. Switch to **2D slice** to inspect the planar field.

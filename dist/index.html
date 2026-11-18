@@ -8,13 +8,27 @@
 <link rel="stylesheet" href="style.css">
 <script defer src="equations.js"></script>
 <script defer src="physics.js"></script>
+<script defer src="view3d.js"></script>
 <script defer src="app.js"></script>
 <script defer src="research-data.js"></script>
 <script defer src="research-rotation.js"></script>
 <script defer src="research-view.js"></script>
 </head>
 <body>
-<header class="top"><div class="brand"><span class="mark" aria-hidden="true">◎</span> Warp Photon Wind Tunnel Simulator</div><nav aria-label="Main"><a href="#tunnel">Simulator</a><a href="#research-lab">Shell experiments</a></nav></header>
+<header class="top"><div class="brand"><span class="mark" aria-hidden="true">◎</span> Warp Photon Wind Tunnel Simulator</div><nav aria-label="Main"><a href="#tunnel">Simulator</a><a href="#research-lab">Shell experiments</a><button id="open-help" type="button" aria-haspopup="dialog">Help</button></nav></header>
+<dialog id="sim-help" aria-labelledby="help-title">
+  <form method="dialog" class="help-head">
+    <h2 id="help-title">How the wind tunnel works</h2>
+    <button type="submit" autofocus>Close</button>
+  </form>
+  <p>The tunnel computes how light travels through selected spacetime geometries and maps the energy density, expansion, or shift that goes with those geometries.</p>
+  <dl>
+    <dt>Run an experiment</dt><dd>Choose a model and change its speed, radius, or wall scale. Turn on <strong>Compare two models</strong> to use the same launches and field scale in both panels.</dd>
+    <dt>Read the views</dt><dd>The <strong>2D slice</strong> maps the field across a plane. The <strong>3D view</strong> shows the reference-radius surface and photon paths rotated around the symmetry axis. Drag the view or focus it and use the arrow keys. Both comparison panels rotate together.</dd>
+    <dt>Explore the research</dt><dd>Use <strong>Edit equations</strong> to try a custom radial profile. <strong>Shell experiments</strong> shows the separate matter-shell studies. <strong>Model equations and sources</strong> explains the metrics and links to the papers.</dd>
+  </dl>
+  <p>The models are general-relativity experiments. Photon paths and stress–energy maps describe what a prescribed geometry does and what it would require.</p>
+</dialog>
 <main>
 <section class="intro" id="tunnel">
   <div class="eyebrow"><span></span> GENERAL RELATIVITY LAB</div>
@@ -46,20 +60,26 @@
   <button class="reset" id="reset" type="button">↺ &nbsp; Reset configuration</button>
 </aside>
 <section class="instrument" aria-label="Field viewport">
-  <div class="instrument-head"><div><span class="eyebrow">MERIDIONAL SLICE</span><h2>Spacetime cross-section</h2></div><button id="pause" type="button" aria-pressed="false">Ⅱ &nbsp; Pause</button></div>
+  <div class="instrument-head"><div><span id="view-label" class="eyebrow">MERIDIONAL SLICE</span><h2 id="view-title">Spacetime cross-section</h2></div><button id="pause" type="button" aria-pressed="false">Ⅱ &nbsp; Pause</button></div>
+  <div class="view-controls" role="group" aria-label="View mode">
+    <button id="view-slice" type="button" aria-pressed="true">2D slice</button>
+    <button id="view-space" type="button" aria-pressed="false">3D view</button>
+    <button id="reset-camera" type="button" hidden>Reset angle</button>
+  </div>
   <div class="layers" role="group" aria-label="Field layer">
     <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Shift speed</button><button data-field="nec" aria-pressed="false">Local NEC</button>
   </div>
   <p id="plot-error" role="alert" hidden></p>
   <div class="plots" id="plots"></div>
   <div class="legend" id="field-legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
+  <p class="launch-note" id="orbit-note" hidden>Drag to rotate or focus the view and use the arrow keys. The mesh samples the selected field at the reference radius. Readouts still use the meridional slice.</p>
   <p class="launch-note" id="launch-note" hidden></p>
 </section>
 </div>
 <template id="plot-template">
   <section class="plot">
     <h3 data-role="title" hidden></h3>
-    <div class="viewport"><canvas role="img"></canvas><span class="slice">z = 0</span></div>
+    <div class="viewport"><canvas role="img"></canvas><span class="slice" data-role="slice">z = 0</span></div>
     <div class="readouts">
       <div><span>MIN. EULERIAN DENSITY</span><strong data-role="density"></strong><small>Visible slice · ℓ⁻²</small></div>
       <div><span>ENERGY CONDITION</span><strong data-role="condition"></strong><small data-role="condition-note"></small></div>

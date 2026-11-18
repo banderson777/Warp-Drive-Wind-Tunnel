@@ -172,7 +172,7 @@ function update(){
     panel.snapshot=snapshot;
     panel.get('title').textContent=title;
     panel.get('title').hidden=!comparing;
-    panel.canvas.setAttribute('aria-label',title+' · '+fieldNames[layer]+' cross-section');
+    panel.canvas.setAttribute('aria-label',title+' · '+fieldNames[layer]+(in3D?' 3D rotational view':' cross-section'));
     const vacuum=snapshot.speed===0 && !['shell','pocket'].includes(model);
     panel.get('condition').textContent=vacuum?'Vacuum':models[model][1];
     panel.get('condition-note').textContent=vacuum?models.flat[2]:models[model][2];
@@ -287,7 +287,65 @@ function colorize(panel,limit){
   });
   hc.putImageData(buffer,0,0);
 }
-function paint({snapshot,w,h,ctx,heat,trace}){
+let in3D=false;
+const camera={...WarpView3D.defaultCamera};
+function paint(panel){
+  if(!panel.snapshot || !panel.w) return;
+  if(in3D) WarpView3D.draw(panel,camera,extent,layer,byId('grid').checked,phase);
+  else paintSlice(panel);
+}
+function setView(spatial){
+  in3D=spatial;
+  byId('view-slice').setAttribute('aria-pressed',!spatial);
+  byId('view-space').setAttribute('aria-pressed',spatial);
+  byId('view-label').textContent=spatial?'AXISYMMETRIC GEOMETRY':'MERIDIONAL SLICE';
+  byId('view-title').textContent=spatial?'Spacetime in 3D':'Spacetime cross-section';
+  byId('reset-camera').hidden=!spatial;
+  byId('orbit-note').hidden=!spatial;
+  byId('plots').classList.toggle('orbit',spatial);
+  for(const panel of panels){
+    panel.get('slice').hidden=spatial;
+    panel.canvas.tabIndex=spatial?0:-1;
+    if(spatial) panel.canvas.setAttribute('aria-describedby','orbit-note');
+    else panel.canvas.removeAttribute('aria-describedby');
+  }
+  queue();
+}
+function turn(yaw,pitch){
+  camera.yaw=(camera.yaw+yaw)%(2*Math.PI);
+  camera.pitch=Math.max(-1.5,Math.min(1.5,camera.pitch+pitch));
+  if(!byId('plots').hidden) panels.filter(p=>!p.element.hidden).forEach(paint);
+}
+function bindOrbit(canvas){
+  let pointer=null, previousX, previousY;
+  canvas.addEventListener('pointerdown',event=>{
+    if(!in3D || pointer!==null || event.button!==0) return;
+    pointer=event.pointerId;
+    previousX=event.clientX;
+    previousY=event.clientY;
+    canvas.setPointerCapture(pointer);
+    canvas.classList.add('dragging');
+  });
+  canvas.addEventListener('pointermove',event=>{
+    if(event.pointerId!==pointer || !in3D) return;
+    const dx=event.clientX-previousX, dy=event.clientY-previousY;
+    previousX=event.clientX;
+    previousY=event.clientY;
+    turn(dx*.009,dy*.009);
+  });
+  canvas.addEventListener('lostpointercapture',()=>{
+    pointer=null;
+    canvas.classList.remove('dragging');
+  });
+  canvas.addEventListener('keydown',event=>{
+    if(!in3D) return;
+    const moves={ArrowLeft:[-.09,0],ArrowRight:[.09,0],ArrowUp:[0,-.09],ArrowDown:[0,.09]};
+    if(!Object.prototype.hasOwnProperty.call(moves,event.key)) return;
+    event.preventDefault();
+    turn(...moves[event.key]);
+  });
+}
+function paintSlice({snapshot,w,h,ctx,heat,trace}){
   if(!snapshot || !w) return;
   const unit=w/(2*extent);
   const x=u=>w/2+u*unit, y=v=>h/2-v*unit;
@@ -387,6 +445,8 @@ byId('reset').addEventListener('click',()=>{
   byId('compare').checked=false;
   for(const id of ['rays','grid']) byId(id).checked=true;
   paused=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  Object.assign(camera,WarpView3D.defaultCamera);
+  setView(false);
   layer='rho';
   phase=0;
   setPause();
@@ -409,6 +469,14 @@ byId('edit-model').addEventListener('click',()=>{
   else loadEditor('alcubierre',{f:'0'});
 });
 loadEditor(custom.family,custom.formulas);
+byId('open-help').addEventListener('click',()=>byId('sim-help').showModal());
+byId('view-space').addEventListener('click',()=>setView(true));
+byId('view-slice').addEventListener('click',()=>setView(false));
+byId('reset-camera').addEventListener('click',()=>{
+  Object.assign(camera,WarpView3D.defaultCamera);
+  turn(0,0);
+});
+for(const panel of panels) bindOrbit(panel.canvas);
 const observer=new ResizeObserver(queue);
 for(const panel of panels) observer.observe(panel.canvas);
 queue();

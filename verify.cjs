@@ -103,3 +103,17 @@ assert.throws(()=>Warp.validate({...pocket,custom:Equations.create('pocket',{f:'
 assert.throws(()=>Warp.validate({...shell,custom:Equations.create('shell',{m:'r'})},6.2),/2m|regular shell/);
 assert.throws(()=>Warp.validate({...alcubierre,custom:Equations.create('alcubierre',{f:'1/r'})},6.2),/finite/);
 console.log('Custom equations and preset equivalence checks passed.');
+
+// The 3D view keeps calculated paths and expands only the transverse angle.
+const View3D = require('./dist/view3d');
+const sampleTrace = Warp.rays(alcubierre, 6.2);
+const bundle = View3D.rayBundle(sampleTrace);
+assert.equal(bundle.length, 41);
+assert.equal(bundle[0].path, sampleTrace[7].path);
+assert(bundle.slice(1,9).every(ray=>ray.path===sampleTrace[8].path));
+assert.equal(new Set(bundle.slice(1,9).map(ray=>ray.angle)).size, 8);
+const center = [400,200,0];
+const projection = View3D.project(800,400,6.2,View3D.defaultCamera);
+assert.deepEqual(projection([0,0,0]),center);
+assert.notDeepEqual(projection([2,1,0]),View3D.project(800,400,6.2,{yaw:0,pitch:0})([2,1,0]));
+console.log('3D photon bundle and camera checks passed.');
