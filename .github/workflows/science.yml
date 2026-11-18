@@ -1,0 +1,23 @@
+name: Scientific checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: node verify.cjs
+      - run: python3 -B research/cluster_shell.py
+      - run: python3 -B research/check_stress.py
+      - run: python3 -B research/vlasov_shell.py
+      - run: python3 -B research/vlasov_dilation.py
+      - run: python3 -B research/vlasov_rotation.py
+      - run: python3 -B research/vlasov_second_order.py

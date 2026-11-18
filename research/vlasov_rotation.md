@@ -37,7 +37,7 @@ F'=\frac{16\pi r^3}{\sqrt A}[\chi\beta+\eta(s_q-\kappa s_1)],
 \qquad \beta'=\frac{N F}{r^4\sqrt A}.
 \]
 
-The regular cavity has (F=0) and constant (eta). In the vacuum exterior the nonrotating-at-infinity solution is (eta=-2J/r^3), with (F=6J). Impose (eta(b)=F(b)=0) for a zero-angular-momentum exterior, integrate inward for each bias function, and select (kappa) so (F(a)=0). This solves the sourced first-order boundary-value problem with exterior time and angle fixed at infinity. A spatially constant cavity shift is locally removable by rotating the angular coordinates. Its difference from the fixed exterior angular frame describes the dragging effect. [3+1 momentum constraint](https://arxiv.org/abs/gr-qc/0703035)
+The regular cavity has (F=0) and constant (\beta). In the vacuum exterior the nonrotating-at-infinity solution is (\beta=-2J/r^3), with (F=6J). Impose (\beta(b)=F(b)=0) for a zero-angular-momentum exterior, integrate inward for each bias function, and select (kappa) so (F(a)=0). This solves the sourced first-order boundary-value problem with exterior time and angle fixed at infinity. A spatially constant cavity shift is locally removable by rotating the angular coordinates. Its difference from the fixed exterior angular frame describes the dragging effect. [3+1 momentum constraint](https://arxiv.org/abs/gr-qc/0703035)
 
 ## Numerical checks
 
@@ -46,7 +46,7 @@ The static reference has (L_0=0.1), (y_0=0.1), and a midpoint radius of about 2.
 | Quantity | Result |
 | --- | ---: |
 | Bias balance (kappa) | 0.4164354 |
-| Cavity shift (eta) | (+8.10446\times10^{-6}) per fiducial length |
+| Cavity shift (\beta) | (+8.10446\times10^{-6}) per fiducial length |
 | Integrated net (J), independent moment quadrature | (6.65\times10^{-14}) in fiducial length squared |
 | Peak differential guided-light time, as seen at infinity | 2.2663 ps at 10 m midpoint radius |
 | Guide radius at that peak | 5.5062 m |

@@ -79,7 +79,7 @@ const WarpView3D = (() => {
 
   function mesh(ctx,edges,limit,foreground){
     for(const {a,b,value} of edges){
-      const intensity=limit?Math.min(1,(Math.abs(value)/limit)**.65):0;
+      const intensity=limit?Math.min(1,Math.abs(value)/limit):0;
       const color=value===null?'219,151,72':intensity<.015?'150,168,202':value<0?'231,111,247':'63,224,205';
       const alpha=value===null?(foreground?.75:.3):foreground?.25+.55*intensity:.10+.20*intensity;
       ctx.strokeStyle='rgba('+color+','+alpha+')';

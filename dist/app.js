@@ -5,7 +5,7 @@ const models={
   alcubierre:['A translating bubble with flat spatial slices.','NEC violated','For nonzero speed in this model.','ds² = −dt² + [dx + v(1 − f)dt]² + dy² + dz²','The wall’s transverse shear gives ρ = −v²(f′y/r)²/(32π) on this slice. Expansion θ = vf′x/r. An axial photon emitted toward the front has coordinate speed 1 − v(1 − f), which can vanish in the wall for v > 1.'],
   natario:['A translating bubble with divergence-free flow.','NEC violated','For this nontrivial zero-expansion flow.','u = ∇ × [vf(r)(eₓ × r⃗)/2],  ds² = −dt² + |d𝐫 − (u − veₓ)dt|²','The radial profile is used as a vector potential. The volume expansion vanishes everywhere, while shear requires negative Eulerian energy. The local flow can exceed the prescribed bubble speed.'],
   pocket:['A large proper interior behind a small coordinate radius.','WEC violated','Negative Eulerian density in the conformal wall.','ds² = −dt² + B(r)²{[dx + v(1 − f)dt]² + dy² + dz²}','Uses the Van Den Broeck metric ansatz with a softened teaching profile: B = 4 in the pocket and transitions to 1 across a quintic wall. The Hamiltonian constraint includes the intrinsic curvature of the B²-scaled spatial slices. This choice shows the geometry at moderate scales. The paper explores much larger scale ratios.'],
-  shell:['A static, curved-space comparison with a positive-density wall.','NEC violated','Radial null contraction is negative outside the wall.','ds² = −dt² + dr²/(1 − 2m(r)/r) + r²dΩ²','The mass function smoothly rises from zero to M across the shell. The density is m′/(4πr²), radial pressure is −m/(4πr³), and tangential pressure is (m − rm′)/(8πr³). Local NEC shows ρ + min(pᵣ, pₜ). This idealized shell has constant lapse and serves as a comparison with published subluminal shell metrics.'],
+  shell:['Unit cavity clock rate. Radial tension and radial NEC violation extend to infinity. The research Einstein cluster has a vacuum exterior and a 10.52% cavity clock deficit.','NEC violated','Radial null contraction is negative outside the wall.','ds² = −dt² + dr²/(1 − 2m(r)/r) + r²dΩ²','The mass function smoothly rises from zero to M across the shell. The density is m′/(4πr²), radial pressure is −m/(4πr³), and tangential pressure is (m − rm′)/(8πr³). Local NEC shows ρ + min(pᵣ, pₜ). This idealized shell has constant lapse and serves as a comparison with published subluminal shell metrics.'],
   flat:['The special-relativistic control for the optical experiment.','Vacuum','Null energy condition saturated.','ds² = −dt² + dx² + dy² + dz²','The stress–energy and shift vanish. Photons follow straight lines.']
 };
 const modelSources={
@@ -36,6 +36,11 @@ const modelSources={
 };
 const library=[
   ['1994','Alcubierre · Hyper-fast travel','The original prescribed translating bubble and its required stress–energy.','https://arxiv.org/abs/gr-qc/0009013'],
+  ['1996','Ford & Roman · Quantum inequalities','Bounds negative-energy magnitude and sampling duration for a specified quantum field and observer.','https://arxiv.org/abs/gr-qc/9510071'],
+  ['1996','Everett · Warp drive and causality','Examines closed causal loops in a construction using superluminal travel.','https://doi.org/10.1103/PhysRevD.53.7365'],
+  ['1997','Pfenning & Ford · Warp-wall constraints','Applies a quantum inequality to the negative energy in an Alcubierre wall.','https://arxiv.org/abs/gr-qc/9702026'],
+  ['1997','Everett & Roman · Krasnikov tubes','Examines causal access to the bubble wall and closed timelike curves in a two-tube geometry.','https://arxiv.org/abs/gr-qc/9702049'],
+  ['2021','Fell & Heisenberg · Energy in shift geometries','Explores positive Eulerian energy in prescribed geometries. Other observers require separate stress tests.','https://arxiv.org/abs/2104.06488'],
   ['1999','Van Den Broeck · Pocket geometry','Changes the spatial geometry to place a large proper interior behind a small exterior bubble.','https://arxiv.org/abs/gr-qc/9905084'],
   ['2002','Natário · Zero expansion','Constructs a divergence-free bubble flow with nontrivial shear.','https://arxiv.org/abs/gr-qc/0110086'],
   ['2021','Bobrick & Martire · Physical warp drives','Classifies warp geometries and studies subluminal positive-energy matter shells.','https://arxiv.org/abs/2102.06824'],
@@ -61,7 +66,7 @@ for(const [year,title,note,url] of library){
   article.append(label,link,description);
   byId('papers').append(article);
 }
-const fieldNames={rho:'Eulerian density ρ · ℓ⁻²',expansion:'Volume expansion θ · ℓ⁻¹',shift:'Bubble flow magnitude · c',clock:'Stationary clock rate · dτ/dt',nec:'Minimum null contraction · ℓ⁻²'};
+const fieldNames={rho:'Eulerian density ρ · ℓ⁻²',expansion:'Volume expansion θ · ℓ⁻¹',shift:'Bubble flow (lab frame) · c',clock:'Stationary clock rate · dτ/dt',nec:'Minimum null contraction · ℓ⁻²'};
 const background=[8,15,28], negative=[231,111,247], positive=[63,224,205];
 const scientific=value=>value===0?'0':value.toExponential(2);
 const extent=6.2, aspect=1.65, vertical=extent/aspect;
@@ -217,7 +222,7 @@ async function update(signal){
     byId(id+'-row').hidden=!needed;
     byId(id+'-out').textContent=values[id].toFixed(2)+({speed:' c',radius:' ℓ',width:' ℓ',compactness:''}[id]);
   }
-  byId('model-note').textContent=primary==='custom'?'Custom profile · '+models[custom.family][0]:models[primary][0];
+  byId('model-note').textContent=primary==='custom'?'Custom profile · '+custom.family:models[primary][0];
   const {direction}=jobs[0].options;
   byId('launch-note').hidden=!comparing || !traceEnabled;
   byId('launch-note').textContent=direction===1?'Photons enter both views from the left.':'Photons enter both views from the right at the selected bubble speed.';
@@ -231,7 +236,7 @@ async function update(signal){
     const center=Warp.clockRate(0,0,snapshot);
     panel.get('clock').textContent=center===null?'Unavailable':center.toFixed(6)+' s/s';
     panel.get('clock-note').textContent=center===null?'Fixed-center motion is not timelike.':
-      center===1?'Matches distant lab time.':'Proper seconds per distant lab second.';
+      snapshot.custom?'Proper seconds per coordinate second.':center===1?'Matches distant lab time.':'Proper seconds per distant lab second.';
     const vacuum=snapshot.speed===0 && !['shell','pocket'].includes(model);
     panel.get('condition').textContent=vacuum?'Vacuum':models[model][1];
     panel.get('condition-note').textContent=vacuum?models.flat[2]:models[model][2];
@@ -241,6 +246,12 @@ async function update(signal){
       panel.traceKey=key;
       panel.sampleKey=key;
       panel.samples=samples;
+      panel.get('volume').textContent=scientific(samples.ball.volume);
+      panel.get('energy').textContent=scientific(samples.ball.positive)+' / '+scientific(samples.ball.negative);
+      panel.get('terminations').textContent=['domain exit','step limit','small step'].map(reason=>{
+        const count=trace.filter(ray=>ray.termination===reason).length;
+        return count?count+' '+reason:'';
+      }).filter(Boolean).join(' · ');
       panel.heat.width=samples.nx;
       panel.heat.height=samples.ny;
       panel.get('density').textContent=scientific(samples.minRho);
@@ -344,7 +355,7 @@ function colorize(panel,limit){
       return;
     }
     const color=v<0?negative:positive;
-    const intensity=v===0?0:(Math.abs(v)/limit)**.65;
+    const intensity=v===0?0:Math.abs(v)/limit;
     for(let c=0;c<3;c++) buffer.data[i*4+c]=background[c]+intensity*(color[c]-background[c]);
     buffer.data[i*4+3]=255;
   });

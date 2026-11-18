@@ -122,8 +122,25 @@ const WarpNec = (() => {
     return {minimum,direction:directionList[best],negative,total:weights.length};
   }
 
-  function probe(x,y,s){
-    return directions(tensor(x,y,0,s));
+  function probe(x,y,s,refine=false){
+    const t=tensor(x,y,0,s), sampled=directions(t);
+    if(!refine) return sampled;
+    let n=sampled.direction, minimum=sampled.minimum;
+    const scale=Math.max(...Array.from(t.slice(1),Math.abs));
+    // Local descent on the unit sphere, initialized from the best sampled ray.
+    for(let iteration=0;scale>0 && iteration<80;iteration++){
+      const gradient=n.map((_,i)=>(t[i+1]+n.reduce((sum,v,j)=>sum+t[4*(i+1)+j+1]*v,0))/scale);
+      const radial=gradient.reduce((sum,v,i)=>sum+v*n[i],0);
+      const trial=n.map((v,i)=>v-(gradient[i]-radial*v)/8);
+      const norm=Math.hypot(...trial);
+      const next=trial.map(v=>v/norm);
+      const k=[1,...next];
+      const value=k.reduce((sum,a,i)=>sum+a*k.reduce((row,b,j)=>row+t[4*i+j]*b,0),0);
+      if(value>=minimum) break;
+      minimum=value;
+      n=next;
+    }
+    return {...sampled,refinedMinimum:minimum,refinedDirection:n};
   }
   return {moving,supported,tensor,directions,probe};
 })();

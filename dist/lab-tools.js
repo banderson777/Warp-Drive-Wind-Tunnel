@@ -227,11 +227,11 @@
         }
         const rho=Warp.field(x,y,s).rho;
         if(WarpNec.moving(s)){
-          const {minimum,direction,negative,total}=WarpNec.probe(x,y,s);
+          const {minimum,direction,negative,total,refinedMinimum}=WarpNec.probe(x,y,s,true);
           resultRow(node,name,'Eulerian density '+scientific(rho)+' ℓ⁻². Sampled minimum '+scientific(minimum)+
             ' ℓ⁻². '+(s.speed===0?'All directions tie.':'Direction (x, y, z): ('+
               direction.map(v=>Math.abs(v)<.0005?'0.000':v.toFixed(3)).join(', ')+').')+
-            ' '+negative+'/'+total+' samples below −10⁻¹² ℓ⁻².');
+            ' '+negative+'/'+total+' samples below −10⁻¹² ℓ⁻². Locally refined minimum '+scientific(refinedMinimum)+' ℓ⁻².');
           continue;
         }
         const angles=Array.from({length:19},(_,j)=>Warp.nullEnergy(r,Math.cos(j*Math.PI/36),s));

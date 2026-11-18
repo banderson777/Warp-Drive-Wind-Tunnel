@@ -12,7 +12,7 @@ const WarpComputeCore = (() => {
   function* sample(s,field,extent,aspect,nx){
     const ny=Math.round(nx/aspect), vertical=extent/aspect;
     const values=field===null?null:new Float64Array(nx*ny);
-    let min=0,max=0,minRho=0,minNec=0,unavailable=false;
+    let min=0,max=0,minRho=Infinity,minNec=0,unavailable=false;
     const center=field==='clock'?Warp.clockRate(0,0,s):null;
     let insideMin=center===null?Infinity:center, insideMax=center===null?0:center;
     let insideUnavailable=center===null;
@@ -63,6 +63,7 @@ const WarpComputeCore = (() => {
           if(meshValue!==null && !Number.isFinite(meshValue)) throw Error('The 3D mesh overflows the numeric range.');
         }
       }
+      samples.ball=Warp.ballIntegrals(s);
       const trace=job.rays?yield* Warp.trace(s,extent,options):[];
       return {samples,trace};
     }

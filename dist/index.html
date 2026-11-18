@@ -33,7 +33,7 @@
   <dl>
     <dt>Run an experiment</dt><dd>Choose a model and change its speed, radius, or wall scale. Turn on <strong>Compare two models</strong> to use the same launches and field scale in both panels.</dd>
     <dt>Read the views</dt><dd>The <strong>2D slice</strong> maps the field across a plane. The <strong>3D view</strong> shows the reference-radius surface and photon paths rotated around the symmetry axis. Drag the view or focus it and use the arrow keys. Both comparison panels rotate together.</dd>
-    <dt>Compare clocks</dt><dd>The <strong>Clock rate</strong> map shows proper time per unit of distant lab time for clocks held in place in the model coordinates. Amber marks positions where that motion cannot be followed by a clock.</dd>
+    <dt>Compare clocks</dt><dd>The <strong>Clock rate</strong> map shows proper time per unit of model coordinate time for clocks held in place in the model coordinates. Amber marks positions where that motion cannot be followed by a clock.</dd>
     <dt>Save and reproduce</dt><dd><strong>Experiment tools</strong> saves runs, exports samples, and tests numerical sensitivity. <strong>Guided labs</strong> loads examples to explore.</dd>
     <dt>Explore the research</dt><dd>Use <strong>Edit equations</strong> to try a custom radial profile. <strong>Shell experiments</strong> shows the separate matter-shell studies. <strong>Model equations and sources</strong> explains the metrics and links to the papers.</dd>
   </dl>
@@ -49,11 +49,11 @@
 <aside class="controls" aria-label="Simulation controls">
   <h2>Configuration</h2>
   <label for="model">Spacetime model</label>
-  <select id="model"><option value="alcubierre">Alcubierre bubble</option><option value="natario">Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Static matter shell</option><option value="flat">Minkowski control</option><option value="custom">Custom equation</option></select>
+  <select id="model"><option value="alcubierre">Alcubierre bubble</option><option value="natario">Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Ultrastatic comparison shell</option><option value="flat">Minkowski control</option><option value="custom">Custom equation</option></select>
   <label class="check compare-toggle"><input id="compare" type="checkbox"> Compare two models</label>
   <div id="comparison-controls" hidden>
     <label for="second-model">Comparison model</label>
-    <select id="second-model"><option value="alcubierre">Alcubierre bubble</option><option value="natario" selected>Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Static matter shell</option><option value="flat">Minkowski control</option><option value="custom">Custom equation</option></select>
+    <select id="second-model"><option value="alcubierre">Alcubierre bubble</option><option value="natario" selected>Natário bubble</option><option value="pocket">Van Den Broeck pocket</option><option value="shell">Ultrastatic comparison shell</option><option value="flat">Minkowski control</option><option value="custom">Custom equation</option></select>
     <p id="comparison-note">Both views use the same coordinates, field scale, and photon launches.</p>
   </div>
   <p id="model-note"></p>
@@ -78,14 +78,14 @@
     <button id="reset-camera" type="button" hidden>Reset angle</button>
   </div>
   <div class="layers" role="group" aria-label="Field layer">
-    <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Shift speed</button><button data-field="clock" aria-pressed="false">Clock rate</button><button data-field="nec" aria-pressed="false">Local NEC</button>
+    <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Bubble flow (lab frame)</button><button data-field="clock" aria-pressed="false">Clock rate</button><button data-field="nec" aria-pressed="false">Local NEC</button>
   </div>
   <p id="plot-error" role="alert" hidden></p>
   <p id="plot-progress" class="launch-note" role="status" hidden>Calculating spacetime fields… <button id="cancel-calculation" type="button">Cancel calculation</button></p>
   <div class="plots" id="plots"></div>
   <div class="legend" id="field-legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span id="clock-key" hidden><i aria-hidden="true"></i> No stationary clock</span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
   <p class="launch-note" id="orbit-note" hidden>Drag to rotate or focus the view and use the arrow keys. The mesh samples the selected field at the reference radius. Readouts still use the meridional slice.</p>
-  <p class="launch-note" id="clock-note" hidden>Each clock stays at a fixed position in the model coordinates. For moving models it travels with the bubble. A rate of 1 matches a distant lab clock.</p>
+  <p class="launch-note" id="clock-note" hidden>Each clock stays at a fixed position in the model coordinates. For moving models it travels with the bubble. For the presets, coordinate time is normalized to the distant lab. Custom profiles require a separate asymptotic check.</p>
   <p class="launch-note" id="nec-note" hidden>Moving bubbles show the lowest value among 198 sampled null directions per point. Click the 2D slice or use the <a href="#null-title">directional probe</a> to inspect a location.</p>
   <p class="launch-note" id="launch-note" hidden></p>
 </section>
@@ -96,9 +96,11 @@
     <div class="viewport"><canvas role="img"></canvas><span class="slice" data-role="slice">z = 0</span></div>
     <div class="readouts">
       <div><span>CENTER CLOCK</span><strong data-role="clock"></strong><small data-role="clock-note"></small><small data-role="clock-range" hidden></small></div>
+      <div><span>PROPER VOLUME · r ≤ R</span><strong data-role="volume"></strong><small>Constant-t slice · ℓ³</small></div>
+      <div><span>EULERIAN ENERGY · r ≤ R</span><strong data-role="energy"></strong><small>Positive / negative contributions · ℓ</small></div>
       <div><span>MIN. EULERIAN DENSITY</span><strong data-role="density"></strong><small>Visible slice · ℓ⁻²</small></div>
       <div><span>ENERGY CONDITION</span><strong data-role="condition"></strong><small data-role="condition-note"></small></div>
-      <div><span>RAY INTEGRATION</span><strong data-role="integration"></strong><small>Max. normalized Hamiltonian drift</small></div>
+      <div><span>RAY INTEGRATION</span><strong data-role="integration"></strong><small>Max. normalized Hamiltonian drift</small><small data-role="terminations"></small></div>
     </div>
   </section>
 </template>
@@ -127,7 +129,7 @@
   </form>
 </section>
 <section class="notebook" aria-label="Simulation notes">
-<details open id="model-notes"><summary>Model equations and sources</summary><div id="equations"></div><p>The center clock measures proper time at x = y = z = 0. In the built-in translating bubbles, the shift cancels the bubble motion at the center, giving one second of proper time per second of distant lab time even when the exterior cannot support a comoving clock. The Minkowski control and static matter shell in the main tunnel have unit lapse and stationary clocks run at the lab rate. <a href="#research-lab">Shell experiments</a> includes matter-sourced models with a variable lapse and a slower cavity clock.</p><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
+<details open id="model-notes"><summary>Model equations and sources</summary><div id="equations"></div><p>The center clock measures proper time at x = y = z = 0. In the built-in translating bubbles, the shift cancels the bubble motion at the center, giving one second of proper time per second of distant lab time even when the exterior cannot support a comoving clock. The Minkowski control and static matter shell in the main tunnel have unit lapse and stationary clocks run at the lab rate. <a href="#research-lab">Shell experiments</a> includes matter-sourced models with a variable lapse and a slower cavity clock.</p><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field with a linear color scale. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
 </section>
 <section class="notebook experiment-tools" id="experiment-tools" aria-labelledby="experiment-title">
   <h2 id="experiment-title">Experiment tools</h2>
@@ -228,7 +230,7 @@
     <div><h3 id="shell-map-title">Equatorial slice</h3><canvas id="shell-map" role="img" aria-label="Equatorial slice of the selected shell field"></canvas></div>
     <div><h3>Radial profile</h3><canvas id="shell-profile" role="img" aria-label="Radial profile of the selected shell field"></canvas></div>
   </div>
-  <div class="shell-scale"><span id="shell-low"></span><span id="shell-gradient"></span><span id="shell-high"></span><span id="shell-units"></span></div>
+  <div class="shell-scale"><small>Gray · outside sampled profile</small><span id="shell-low"></span><span id="shell-gradient"></span><span id="shell-high"></span><span id="shell-units"></span></div>
   <p class="shell-readout" id="shell-readout"></p>
   <div id="shell-evolution">
     <div class="shell-time">

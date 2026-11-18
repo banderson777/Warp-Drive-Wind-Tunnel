@@ -216,3 +216,41 @@ const zeroTensor=Nec.tensor(R,R,0,{...alcubierre,speed:0});
 assert(zeroTensor.every(value=>value===0));
 assert(Nec.supported(shell) && !Nec.supported(zero) && !Nec.supported(pocket));
 console.log('Warpax field, full stress tensor, and sampled null map checks passed on both grids.');
+
+// Review regressions through the same panel sampler used in the browser.
+const fsReview=require('fs'), vmReview=require('vm');
+const reviewEngine=vmReview.runInNewContext(fsReview.readFileSync(require.resolve('./dist/compute-core.js'),'utf8')+
+  '\nWarpComputeCore',{Warp,WarpEquations:Equations,WarpNec:Nec});
+for(const coefficient of [.001,0,-.001]){
+  const custom=Equations.create('shell',{m:String(coefficient)+'*r^3'});
+  const s={...shell,custom};
+  Warp.validate(s,6.2);
+  const density=3*coefficient/(4*Math.PI);
+  for(const r of [0,.0001,.001,.1]){
+    assert(Math.abs(Warp.field(r,0,s).rho-density)<1e-12);
+    assert(Math.abs(Warp.nullEnergy(r,1,s)-coefficient/(2*Math.PI))<1e-12);
+  }
+  const job={kind:'panel',field:'rho',extent:6.2,aspect:1.65,
+    snapshot:{...shell,custom:{family:'shell',formulas:custom.formulas}},rays:false,options:{maxSteps:1}};
+  const {samples}=reviewEngine.runSync(job);
+  assert.equal(samples.minRho,Math.min(...samples.values));
+  const study=reviewEngine.runSync({...job,kind:'numerics',options:{dt:.02,maxSteps:1}});
+  for(const minimum of [study.coarse,study.fine]) assert(Math.abs(minimum-density)<1e-12);
+}
+for(const a of ['0.001','1e-15']) assert.throws(()=>Warp.validate({...shell,
+  custom:Equations.create('shell',{m:a+'*r^2'})},6.2),/regular shell/);
+const flatVolume=4*Math.PI*R**3/3;
+for(const B of [1,2]){
+  const integrals=Warp.ballIntegrals({...pocket,speed:0,custom:Equations.create('pocket',{B:String(B),f:'0'})});
+  assert(Math.abs(integrals.volume/flatVolume-B**3)<1e-12);
+  assert.equal(integrals.positive,0);
+  assert.equal(integrals.negative,0);
+}
+const pocketBall=Warp.ballIntegrals(pocket);
+assert(pocketBall.volume>flatVolume && pocketBall.positive>0 && pocketBall.negative<0);
+assert(Warp.rays(flat,6.2,{maxSteps:1}).every(ray=>ray.termination==='step limit'));
+console.log('Custom center, sampled minima, proper volumes, signed energies and ray termination checks passed.');
+
+const refined=Nec.probe(.4,R,natario,true);
+assert(refined.refinedMinimum<=refined.minimum);
+assert(Math.abs(Math.hypot(...refined.refinedDirection)-1)<1e-12);

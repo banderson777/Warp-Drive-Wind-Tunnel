@@ -15,6 +15,20 @@ const Warp = (() => {
     const a=customValue(key,Math.abs(r-h),s), b=customValue(key,r+h,s);
     return [center,(b-a)/(2*h),(a-2*center+b)/(h*h)];
   }
+  function centralMassCoefficient(s){
+    let r=Math.max(1e-5,s.width*1e-3);
+    let previous=customValue('m',r,s)/r**3;
+    for(let i=0;i<24;i++){
+      r/=2;
+      const value=customValue('m',r,s)/r**3;
+      if(Number.isFinite(value) && Math.abs(value-previous)<=1e-7*Math.max(Math.abs(value),Math.abs(previous)))
+        return value;
+      // Higher-order mass profiles have zero cubic coefficient.
+      if(i===23 && Math.abs(value)<.95*Math.abs(previous)) return 0;
+      previous=value;
+    }
+    throw Error('A regular shell requires a resolved finite limit of m(r)/r³ at the center.');
+  }
   function validate(s,extent) {
     const h=Math.max(1e-5,s.width*1e-3), limit=Math.SQRT2*extent*1.05;
     for(const key of Object.keys(s.custom.formulas)){
@@ -23,8 +37,9 @@ const Warp = (() => {
       const nearer=customValue(key,h/2,s);
       const tolerance=1e-10*Math.max(1,Math.abs(origin));
       if(key==='m'){
-        if(Math.abs(origin)>tolerance || Math.abs(nearer)>Math.abs(near)*.16+tolerance)
+        if(origin!==0)
           throw new Error('For a regular shell center, use m(0) = 0 and m(r) of order r³ or smaller near r = 0.');
+        centralMassCoefficient(s);
       }else if(Math.abs(nearer-origin)>.35*Math.abs(near-origin)+tolerance){
         throw new Error(key+'(r) needs zero radial slope at the center.');
       }
@@ -38,7 +53,13 @@ const Warp = (() => {
     return [(Math.tanh(a)-Math.tanh(b))/norm, (sech2(a)-sech2(b))/(w*norm)];
   }
   function shell(r,s) {
-    if(s.custom) return customProfile('m',r,s);
+    if(s.custom){
+      if(!r) return [customValue('m',0,s),0];
+      const h=Math.min(r/3,Math.max(1e-5,s.width*1e-3));
+      const mass=x=>customValue('m',x,s);
+      const derivative=(8*(mass(r+h)-mass(r-h))-(mass(r+2*h)-mass(r-2*h)))/(12*h);
+      return [mass(r),derivative];
+    }
     const {radius:R,width:w,compactness:C}=s;
     const q = clamp((r-R+w/2)/w, 0, 1), M = C*R/2;
     return [M*q**3*(10-15*q+6*q*q), M*30*q*q*(1-q)**2/w];
@@ -68,6 +89,10 @@ const Warp = (() => {
     return speed<1?Math.sqrt((1-speed)*(1+speed)):null;
   }
   function shellStress(r,s) {
+    if(!r && s.custom){
+      const a=centralMassCoefficient(s)/(4*Math.PI);
+      return {rho:3*a,radial:-a,tangent:-a};
+    }
     const [m,dm]=shell(r,s);
     const rho=r ? dm/(4*Math.PI*r*r) : 0;
     const radial=r ? -m/(4*Math.PI*r**3) : 0;
@@ -108,6 +133,28 @@ const Warp = (() => {
     for(let i=0;i<3;i++) for(let j=0;j<3;j++) norm+=((gradients[i][j]+gradients[j][i])/2)**2;
     return {rho:-norm/(16*Math.PI),expansion:0,shift,nec:null};
   }
+  // Axisymmetric ball on the displayed constant-t slice. Integrate over cos(theta)
+  // from 0 to 1 using equatorial symmetry and exact flat radial cell volumes.
+  function ballIntegrals(s,radialCells=96,angleCells=24){
+    let volume=0,positive=0,negative=0;
+    for(let i=0;i<radialCells;i++){
+      const inner=s.radius*i/radialCells, outer=s.radius*(i+1)/radialCells;
+      const r=(inner+outer)/2;
+      let factor=1;
+      if(s.model==='pocket') factor=pocket(r,s)[0]**3;
+      if(s.model==='shell') factor=1/Math.sqrt(1-2*shell(r,s)[0]/r);
+      const cell=4*Math.PI/3*(outer**3-inner**3)*factor;
+      volume+=cell;
+      for(let j=0;j<angleCells;j++){
+        const mu=(j+.5)/angleCells;
+        const energy=field(r*mu,r*Math.sqrt(1-mu*mu),s).rho*cell/angleCells;
+        positive+=Math.max(0,energy);
+        negative+=Math.min(0,energy);
+      }
+    }
+    if(![volume,positive,negative].every(Number.isFinite)) throw Error('Ball integral exceeds numerical range.');
+    return {volume,positive,negative};
+  }
   function hamiltonian([x,y,px,py],s) {
     if(s.model==='shell') {
       const r=Math.hypot(x,y), [m]=shell(r,s);
@@ -146,19 +193,20 @@ const Warp = (() => {
       let p=[-direction*extent*.995,(i-7)*s.radius*.24,direction,0];
       const path=[];
       const H=hamiltonian(p,s);
-      let drift=0;
+      let drift=0, termination='step limit';
       for(let n=0;n<maxSteps;n++) {
-        if(Math.abs(p[0])>extent*1.04 || Math.abs(p[1])>extent || !p.every(Number.isFinite)) break;
+        if(!p.every(Number.isFinite)) throw Error('Nonfinite photon state.');
+        if(Math.abs(p[0])>extent*1.04 || Math.abs(p[1])>extent){ termination='domain exit'; break; }
         path.push(p.slice(0,2));
         const next=step(p,dt,s);
         const change=Math.abs(hamiltonian(next,s)-H)/Math.max(1,Math.abs(H));
         if(s.custom && !Number.isFinite(change)) throw new Error('Photon integration left the numeric range.');
         drift=Math.max(drift,change);
-        if(Math.hypot(next[0]-p[0],next[1]-p[1])<1e-7) break;
+        if(Math.hypot(next[0]-p[0],next[1]-p[1])<1e-7){ termination='small step'; break; }
         p=next;
         if(n%32===31) yield;
       }
-      rays.push({path,drift});
+      rays.push({path,drift,termination});
     }
     return rays;
   }
@@ -168,6 +216,6 @@ const Warp = (() => {
     while(!result.done) result=steps.next();
     return result.value;
   }
-  return {profile,shell,flow,field,clockRate,nullEnergy,hamiltonian,step,rayDirection,rayTimeStep,rays,trace,validate};
+  return {profile,shell,flow,field,ballIntegrals,clockRate,nullEnergy,hamiltonian,step,rayDirection,rayTimeStep,rays,trace,validate};
 })();
 if(typeof module==='object') module.exports=Warp;

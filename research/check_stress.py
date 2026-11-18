@@ -91,9 +91,9 @@ def sweep(h, epsilon=1e-4):
             s_bound = sqrt(sum(tensor[k][l]**2 for k in (1, 2, 3) for l in (1, 2, 3)))
             expected_density = dm/(4*pi*r*r) - (
                 a*r*r*sin(theta)**2*(epsilon*domega)**2/(32*pi*n*n))
-            expected_j = abs(epsilon*a*r*sin(theta)/(16*pi*n) *
+            expected_j = (epsilon*a*r*sin(theta)/(16*pi*n) *
                              (ddomega+(4/r+ap/(2*a)-lapse_slope(r, M))*domega))
-            worst_error = max(worst_error, abs(expected_density-density), abs(expected_j-j))
+            worst_error = max(worst_error, abs(expected_density-density), abs(expected_j+tensor[0][3]))
             margin = min(margin, 1-(2*j+s_bound)/density)
     return worst_error, margin
 

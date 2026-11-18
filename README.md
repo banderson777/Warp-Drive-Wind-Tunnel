@@ -4,6 +4,8 @@ An interactive browser laboratory for prescribed general-relativistic metrics. O
 
 [Quick start](#quick-start) · [Controls and readouts](#controls-and-readouts) · [Experiment tools](#experiment-tools) · [Independent benchmarks](#independent-solver-benchmarks) · [Clock rates](#clock-rates) · [Custom equations](#custom-equations) · [Shell experiments](#shell-experiments) · [Reproduction](#reproduce-the-research) · [Model references](#model-references)
 
+[Internal AI-assisted scientific review, numerical checks, and known limitations](research/scientific_review.md)
+
 ## Quick start
 
 1. Open `dist/index.html`. The **Help** button summarizes the interface. Close it with **Close** or Escape.
@@ -27,7 +29,7 @@ The calculation and packaged research data work offline. The simulator uses syst
 | Alcubierre bubble | Axial shift with a smooth radial wall. The wall shows contraction and expansion and negative Eulerian energy density away from the axis. |
 | Natário bubble | Divergence-free shift with zero expansion. The wall still has shear and negative Eulerian energy density. |
 | Van Den Broeck pocket | A conformally enlarged interior with a moderate scale factor of four and a softened transition for visual inspection. |
-| Static matter shell | An ultrastatic, curved-space comparison with positive wall density and radial tension. The Fuchs moving-shell proposal is covered in the research references. |
+| Ultrastatic comparison shell | An ultrastatic, curved-space comparison with positive wall density and radial tension. The Fuchs moving-shell proposal is covered in the research references. |
 
 The main engine evaluates prescribed metrics and evolves test photons. The time-evolved collisionless matter runs appear separately in **Shell experiments**. The models are mathematical experiments. A propulsion system would require a realizable source, dynamical stability, and a demonstrated way to create and steer the geometry.
 
@@ -51,11 +53,11 @@ Geometric units set (G=c=1). Lengths use a fiducial unit **ℓ**, times use **�
 | --- | --- |
 | **Energy density** | Energy measured by the observers normal to the spatial slices. A negative value is evidence of weak-energy-condition violation for that observer. |
 | **Expansion** | The local volume expansion or contraction of the normal observer congruence. |
-| **Shift speed** | Magnitude of the modeled bubble flow. Clock rate uses the motion relative to the normal observers instead. |
-| **Clock rate** | Proper seconds per distant lab second for a clock held at a fixed model position. |
+| **Bubble flow (lab frame)** | Magnitude of the modeled bubble flow. Clock rate uses the motion relative to the normal observers instead. |
+| **Clock rate** | Proper seconds per coordinate second for a clock held at a fixed model position. |
 | **Local NEC** | Lowest sampled null contraction for the built-in Alcubierre and Natário bubbles. Flat space and the ultrastatic shell use their exact directional extrema. Available when every displayed model supports the map. |
 
-Use the field legend for units and signs. For signed maps, purple indicates negative values and teal positive values. Field maps emphasize weak features with a nonlinear color scale. The clock map uses a fixed range shared across all runs.
+Use the field legend for units and signs. For signed maps, purple indicates negative values and teal positive values. The 2D raster and legend use linear color intensity. The clock map uses a fixed range shared across all runs.
 
 **Min. Eulerian density** is a sampled slice minimum. **Energy condition** gives the built-in condition result or a sampled result for custom profiles. An undetermined result leaves the condition open. **Ray integration** reports the largest absolute change in stationary photon Hamiltonian normalized by the larger of 1 or the initial Hamiltonian magnitude. Finite ray-integration time can truncate paths. The **Center clock** and the interior range are described under [Clock rates](#clock-rates).
 
@@ -75,11 +77,11 @@ The mesh is a reference-radius surface colored by the selected field. The photon
 
 ## Clock rates
 
-Choose **Clock rate** for a shared 0–1 map of proper seconds per distant lab second. The clocks are held at fixed spatial coordinates in each model, so in the translating metrics they travel with the bubble. The **Center clock** readout reports the central rate, and the layer adds the sampled range inside the reference radius. Amber marks motion that is null or spacelike, where a physical stationary clock cannot exist.
+Choose **Clock rate** for a shared 0–1 map of proper seconds per coordinate second. In the presets, coordinate time is normalized to a distant lab. Custom profiles need an independent asymptotic check. The clocks are held at fixed spatial coordinates in each model, so in the translating metrics they travel with the bubble. The **Center clock** readout reports the central rate, and the layer adds the sampled range inside the reference radius. Amber marks motion that is null or spacelike, where a physical stationary clock cannot exist.
 
 In the main tunnel the lapse is one. A clock held at fixed coordinates has rate $d\tau/dt=\sqrt{-g_{tt}}$ wherever its worldline is timelike. The built-in translating Alcubierre, Natário, and Van Den Broeck bubbles have rate **1** at the exact center, including at superluminal coordinate speeds. Wall and exterior rates depend on the position of the clock and the geometry. Stationary clocks in the Minkowski control and ultrastatic shell have rate **1** throughout. The range shown inside the reference radius comes from samples and the exact center. Very narrow features can lie between samples. In 3D the wire mesh samples the rate at the reference radius.
 
-The separate **Shell experiments** display **Clock deficit** as $1-N$, where $N$ is the lapse normalized at infinity. A 10.52% deficit means a cavity clock accumulates about 89.48 seconds for every 100 seconds at infinity in that static benchmark. In the evolving shell the readout uses the lapse on each time slice. Rotational studies show the background lapse, consistent with the first-order kinetic model. A rate map describes the stated observers and coordinate time convention.
+The separate **Shell experiments** display **Lapse deficit** as $1-N$, where $N$ is the lapse normalized at infinity. A 10.52% deficit means a cavity clock accumulates about 89.48 seconds for every 100 seconds at infinity in that static benchmark. In the evolving shell the readout uses the lapse on each time slice. Rotational studies show the background lapse, consistent with the first-order kinetic model. A rate map describes the stated observers and coordinate time convention.
 
 ## Custom equations
 
@@ -174,10 +176,24 @@ Open **Model equations and sources** in the simulator for annotated references f
 | Alcubierre bubble | [Original metric](https://arxiv.org/abs/gr-qc/0009013) · [Energy conditions](https://arxiv.org/abs/gr-qc/0406083) · [Semiclassical stability](https://arxiv.org/abs/0904.0141) |
 | Natário bubble | [Zero-expansion construction](https://arxiv.org/abs/gr-qc/0110086) · [Null energy condition](https://arxiv.org/abs/2105.03079) · [Negative-energy bound, preprint](https://arxiv.org/abs/2609.36211) |
 | Van Den Broeck pocket | [Original pocket geometry](https://arxiv.org/abs/gr-qc/9905084) · [Companion discussion](https://arxiv.org/abs/gr-qc/9906050) · [Observer-robust energy checks, preprint](https://arxiv.org/abs/2602.18023) |
-| Static matter shell | [Spherical metric and stress–energy, Section III](https://epizodyspace.ru/bibl/inostr-yazyki/ajph/1988/morris_thorne.pdf) · [Subluminal shell theory](https://arxiv.org/abs/2102.06824) · [Related moving-shell proposal](https://arxiv.org/abs/2405.02709) |
+| Ultrastatic comparison shell | [Spherical metric and stress–energy, Section III](https://epizodyspace.ru/bibl/inostr-yazyki/ajph/1988/morris_thorne.pdf) · [Subluminal shell theory](https://arxiv.org/abs/2102.06824) · [Related moving-shell proposal](https://arxiv.org/abs/2405.02709) |
 
 ### Second-order counterrotation response
 
 In **Shell experiments**, choose **Second order · Fixed particle rest mass** or **Second order · Fixed central cutoff parameter**. Both cases share a scale for **Lapse-deficit change** and **Enclosed mass change**. These are spherical-average corrections to the reference Einstein–Vlasov shell at bias amplitude 0.02. The two constraints give opposite signs for the small center-clock correction. The quadrupole response remains open.
 
 Run `python3 -B research/vlasov_second_order.py dist/research-second-order.js` to reproduce the calculation and regenerate its display data. [Equations, checks, and results](research/vlasov_second_order.md)
+
+## Interpreting the reviewed diagnostics
+
+The main ultrastatic comparison shell has unit cavity clock rate and radial tension extending to infinity. The Einstein cluster in Shell experiments has a vacuum exterior and a cavity clock rate of about 0.895. In rotating research views the lapse gives the rate for observers normal to the slice. A clock held off axis also depends on the azimuthal shift. The lab flow on the main map differs from the comoving ADM shift, whose vector is the bubble translation velocity minus the lab flow.
+
+Each main panel integrates the coordinate ball from zero to the selected reference radius on one constant-time slice. Proper volume uses the spatial metric determinant. Its radial multiplier relative to flat volume is B³ for the conformal pocket, (1−2m/r)⁻¹ᐟ² for the shell and one for flat spatial slices. The energy pair integrates the positive and signed negative portions of the Eulerian density separately with that same proper-volume measure. The midpoint quadrature uses 96 radial shells and 24 angular bins in the cosine of polar angle, with exact flat radial cell volumes. Narrow custom structure can require independent refinement. Compare matched proper interior volumes and account for any material outside the integration sphere before drawing energy comparisons. These slice-dependent integrals do not measure ADM mass or propulsion power.
+
+Ray readouts count domain exits, exhausted step budgets and small-displacement stops. A time-limited path may end before it reaches the wall. Research maps label the spherical projection and shade radii beyond their sampled support gray. The custom-shell solver samples the central limit of m/r³ and uses a radial derivative stencil that stays on the positive-radius side. Sampled regularity checks cannot prove the behavior of arbitrary expressions between samples.
+
+For quantum restrictions on sustained negative energy, see [Pfenning and Ford](https://arxiv.org/abs/gr-qc/9702026). For causal access to a superluminal wall and a two-tube closed-timelike-curve construction, see [Everett and Roman](https://arxiv.org/abs/gr-qc/9702049). These questions require additional spacetime or quantum assumptions beyond a stationary photon trajectory.
+
+GitHub Actions runs the browser-engine regression suite and six standard-library Python research checks on pushes and pull requests. The Node suite compares the current solver against the packaged Warpax reference grids.
+
+For the built-in moving NEC models, the point probe also locally refines the lowest sampled direction on the unit sphere. This can find a lower null contraction between sampled directions. A nonnegative local result cannot certify the NEC globally. The map and sampled violation counts retain the original 198 directions.

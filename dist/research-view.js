@@ -10,10 +10,10 @@
   const beamColors=['#75e6d7','#c0cbe2','#f1a2ed'];
   const fields={
     rho:['Energy density ρ','ℓ⁻²',0],
-    clock:['Clock deficit 1 − N','fraction',1],
+    clock:['Lapse deficit 1 − N','fraction',1],
     pr:['Radial pressure pᵣ','ℓ⁻²',2],
     pt:['Tangential pressure pₜ','ℓ⁻²',3],
-    spin:['Azimuthal shift βφ','ℓ⁻¹',4],
+    spin:['Azimuthal shift β^φ','ℓ⁻¹',4],
     current:['Azimuthal momentum density j','ℓ⁻²',5],
     deltaClock:['Lapse-deficit change Δ(1 − N)','fraction',0],
     deltaMass:['Enclosed mass change Δm','ℓ',1]
@@ -89,8 +89,13 @@
     const img=raster.createImageData(image.width,image.height);
     for(let y=0;y<image.height;y++) for(let x=0;x<image.width;x++){
       const r=radius*Math.hypot((2*(x+.5)/image.width-1)*w/h,(1-2*(y+.5)/image.height));
-      const val=radial(rows,r,key), k=4*(y*image.width+x);
-      const intensity=amplitude?Math.min(1,(Math.abs(val)/amplitude)**.65):0;
+      const k=4*(y*image.width+x);
+      if(r>data.outer*(1-.5/rows.length)){
+        img.data.set([43,46,52,255],k);
+        continue;
+      }
+      const val=radial(rows,r,key);
+      const intensity=amplitude?Math.min(1,Math.abs(val)/amplitude):0;
       const color=val<0?[230,112,246]:[63,224,205];
       for(let c=0;c<3;c++) img.data[k+c]=[8,15,28][c]+intensity*(color[c]-[8,15,28][c]);
       img.data[k+3]=255;
@@ -107,7 +112,7 @@
     ctx.setLineDash([]);
     ctx.fillStyle='#c0cbe2';
     ctx.font='11px monospace';
-    ctx.fillText('z = 0',10,17);
+    ctx.fillText(secondOrder[model.value]?'Spherical average':'z = 0',10,17);
     ctx.fillText('x / ℓ',w-41,h-11);
   }
   function graph(canvas,xRange,yRange,xUnit,yUnit){
@@ -205,6 +210,7 @@
     field.replaceChildren(...options[mode].map(key=>new Option(fields[key][0],key)));
     find('run-label').hidden=!dynamic;
     find('evolution').hidden=!dynamic;
+    map.setAttribute('aria-label',secondOrder[mode]?'Spherical average of selected field':'Equatorial slice of selected field');
     find('map-title').textContent=secondOrder[mode]?'Spherical-average field':'Equatorial slice';
     find('description').textContent=descriptions[mode];
     find('limits').textContent=limits[mode];

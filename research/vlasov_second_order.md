@@ -47,7 +47,7 @@ The inner vacuum has $m_2=0$. For fixed central $y$ use $y_2=0$ there. To hold t
 
 Reversing the bias and the azimuthal direction changes the sign of the shift and angular momentum. The mass, lapse and diagonal stress response are even. With the first-order cancellation imposed, angular momentum therefore vanishes through quadratic order in this expansion. An odd cubic contribution is allowed.
 
-The direct quadratic density forcing contains a term proportional to $\sin^2\theta=(2/3)(1-P_2(\cos\theta))$. In this benchmark the peak magnitude of its angular-average coefficient is **3.19 × 10⁻¹⁰ ℓ⁻²** at the stated bias. The nonspherical forcing is therefore nonzero. The exterior quadrupole depends on solving the coupled nonspherical metric and particle response, including the fact that squared total angular momentum need not remain conserved in the deformed geometry. This calculation does not determine the exterior quadrupole or demonstrate a finite-amplitude stationary solution.
+The direct quadratic density forcing contains a term proportional to $\sin^2\theta=(2/3)(1-P_2(\cos\theta))$. In this benchmark the peak magnitude of its angular-average coefficient is **3.19452 × 10⁻¹⁰ ℓ⁻²** at the stated bias. The exported peak includes the geometric term q and equals **3.19241 × 10⁻¹⁰ ℓ⁻²**. The nonspherical forcing is therefore nonzero. The exterior quadrupole depends on solving the coupled nonspherical metric and particle response, including the fact that squared total angular momentum need not remain conserved in the deformed geometry. This calculation does not determine the exterior quadrupole or demonstrate a finite-amplitude stationary solution.
 
 ## Reproduce and inspect
 
