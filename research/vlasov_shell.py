@@ -155,6 +155,12 @@ def main():
           f'peak radial RMS v/c={shell.peak_radial_rms:.8f}, '
           f'peak p_r/rho={shell.peak_pr_ratio:.8f}, '
           f'pressure-only clock deficit increase={shell.pressure_clock_shift:.8f}')
+    # Independent physical-momentum quadrature / DOP853 review fixture.
+    reference = {'b': 3.60959851012, 'mass': .259564631377,
+                 'rest_mass': .267114482165, 'clock_deficit': .159546728189}
+    for quantity, expected in reference.items():
+        actual = getattr(shell, quantity)
+        assert abs(actual-expected) < 2e-8, (quantity, actual, expected)
     coarse=solve(.1,.004,32)
     assert abs(shell.mass-coarse.mass)<2e-6
     assert abs(shell.b-coarse.b)<2e-6

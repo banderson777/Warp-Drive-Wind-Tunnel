@@ -150,6 +150,25 @@ const far = 20, mass = shell.compactness*shell.radius/2;
 assert.equal(index.index(far)[0],(1+mass/(2*far))**2);
 assert.equal(Optics.ray(()=>[1,0],1).deflection,0);
 assert(Optics.ray(index.index,1).deflection<0);
+// Match the optical ray to the spacetime ray at the same coordinate times.
+const opticalRay=Optics.ray(index.index,.65*R);
+const [qx,qy]=opticalRay.path[0], q=Math.hypot(qx,qy);
+const [n,dndq]=index.index(q);
+const radial=[qx/q,qy/q];
+// For X=n(q)Q, the inverse-transpose Jacobian takes the launch covector
+// (1,0) to areal Cartesian coordinates with radial eigenvalue 1/(n+qn').
+const correction=radial[0]*(1/(n+q*dndq)-1/n);
+let areal=[n*qx,n*qy,1/n+correction*radial[0],correction*radial[1]];
+let opticalError=0;
+for(const [x,y] of opticalRay.path){
+  const [factor]=index.index(Math.hypot(x,y));
+  opticalError=Math.max(opticalError,Math.hypot(areal[0]-factor*x,areal[1]-factor*y));
+  areal=Warp.step(areal,.025,shell);
+}
+assert.equal(opticalRay.path.length,474);
+assert(Math.abs(opticalRay.deflection+10.6401)<.001);
+assert(opticalError<5e-5,'Optical/spacetime trajectory discrepancy: '+opticalError);
+console.log('Shell optical trajectory maximum discrepancy:',opticalError.toExponential(4),'ℓ');
 console.log('Directional NEC and graded-index optics checks passed.');
 
 // Reject loose JSON types before looking up a family or accepting formulas.

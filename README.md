@@ -197,3 +197,5 @@ For quantum restrictions on sustained negative energy, see [Pfenning and Ford](h
 GitHub Actions runs the browser-engine regression suite and six standard-library Python research checks on pushes and pull requests. The Node suite compares the current solver against the packaged Warpax reference grids.
 
 For the built-in moving NEC models, the point probe also locally refines the lowest sampled direction on the unit sphere. This can find a lower null contraction between sampled directions. A nonnegative local result cannot certify the NEC globally. The map and sampled violation counts retain the original 198 directions.
+
+The optical regression compares 474 positions at matched coordinate times between a graded-index ray and an areal-coordinate spacetime ray. The maximum allowed separation is 0.00005 ℓ. The static-shell regression compares the outer radius, ADM mass, particle rest mass and cavity clock deficit to the independently integrated review values, with an absolute tolerance of 2 × 10⁻⁸ in the respective geometric units. These tolerances apply to the reference configuration.
