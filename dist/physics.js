@@ -67,13 +67,23 @@ const Warp = (() => {
     const speed=scale*Math.hypot(ux-s.speed,uy,uz);
     return speed<1?Math.sqrt((1-speed)*(1+speed)):null;
   }
+  function shellStress(r,s) {
+    const [m,dm]=shell(r,s);
+    const rho=r ? dm/(4*Math.PI*r*r) : 0;
+    const radial=r ? -m/(4*Math.PI*r**3) : 0;
+    return {rho,radial,tangent:-(rho+radial)/2};
+  }
+  function nullEnergy(r,radialCosine,s) {
+    if(s.model==='flat') return 0;
+    if(s.model!=='shell') return null;
+    const {rho,radial,tangent}=shellStress(r,s);
+    return rho+radial*radialCosine**2+tangent*(1-radialCosine**2);
+  }
   function field(x,y,s) {
     const r=Math.hypot(x,y);
     if(s.model==='shell') {
-      const [m,dm]=shell(r,s);
-      const rho=r ? dm/(4*Math.PI*r*r) : 0;
-      const pressure=r ? -m/(4*Math.PI*r**3) : 0;
-      return {rho, expansion:0, shift:0, nec:rho+Math.min(pressure,-(rho+pressure)/2)};
+      const {rho,radial,tangent}=shellStress(r,s);
+      return {rho, expansion:0, shift:0, nec:rho+Math.min(radial,tangent)};
     }
     const shift=Math.hypot(...flow(x,y,0,s));
     if(s.model==='flat') return {rho:0,expansion:0,shift,nec:0};
@@ -130,13 +140,13 @@ const Warp = (() => {
   function rayTimeStep(s) {
     return Math.min(s.width/10,s.model==='pocket'?.009:.045)/(1+s.speed);
   }
-  function rays(s,extent,{direction=rayDirection(s),dt=rayTimeStep(s)}={}) {
+  function rays(s,extent,{direction=rayDirection(s),dt=rayTimeStep(s),maxSteps=2300}={}) {
     return Array.from({length:15},(_,i)=>{
       let p=[-direction*extent*.995,(i-7)*s.radius*.24,direction,0];
       const path=[];
       const H=hamiltonian(p,s);
       let drift=0;
-      for(let n=0;n<2300;n++) {
+      for(let n=0;n<maxSteps;n++) {
         if(Math.abs(p[0])>extent*1.04 || Math.abs(p[1])>extent || !p.every(Number.isFinite)) break;
         path.push(p.slice(0,2));
         const next=step(p,dt,s);
@@ -149,6 +159,6 @@ const Warp = (() => {
       return {path,drift};
     });
   }
-  return {profile,shell,flow,field,clockRate,hamiltonian,step,rayDirection,rayTimeStep,rays,validate};
+  return {profile,shell,flow,field,clockRate,nullEnergy,hamiltonian,step,rayDirection,rayTimeStep,rays,validate};
 })();
 if(typeof module==='object') module.exports=Warp;

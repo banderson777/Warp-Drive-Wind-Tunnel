@@ -131,3 +131,23 @@ assert(Math.abs(Warp.clockRate(0,0,zero)-Math.sqrt(1-settings.speed**2))<1e-12);
 assert.equal(Warp.clockRate(0,0,{...zero,speed:1.5}),null);
 assert.equal(Warp.clockRate(0,0,{...pocket,custom:Equations.create('pocket',{f:'0',B:'4'})}),null);
 console.log('Clock rates, moving and static centers, and null boundaries passed.');
+
+// The spherical null-energy probe reproduces the exact directional extrema.
+for(const radius of [0,R,3]){
+  const radial=Warp.nullEnergy(radius,1,shell);
+  const tangent=Warp.nullEnergy(radius,0,shell);
+  assert.equal(Math.min(radial,tangent),Warp.field(radius,0,shell).nec);
+  assert(Math.abs(Warp.nullEnergy(radius,Math.SQRT1_2,shell)-(radial+tangent)/2)<1e-12);
+}
+assert.equal(Warp.nullEnergy(R,.5,flat),0);
+assert.equal(Warp.nullEnergy(R,.5,alcubierre),null);
+
+const Optics = require('./dist/lab-optics');
+const index = Optics.medium(shell,Warp.shell);
+assert(index.center>1);
+assert(index.index(4)[0]<index.center);
+const far = 20, mass = shell.compactness*shell.radius/2;
+assert.equal(index.index(far)[0],(1+mass/(2*far))**2);
+assert.equal(Optics.ray(()=>[1,0],1).deflection,0);
+assert(Optics.ray(index.index,1).deflection<0);
+console.log('Directional NEC and graded-index optics checks passed.');

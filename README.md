@@ -1,8 +1,8 @@
-# Warp Photon Wind Tunnel Simulator
+# Warp Drive Wind Tunnel
 
 An interactive browser laboratory for prescribed general-relativistic metrics. Open `dist/index.html` in a modern browser. The simulator runs locally without a build or package installation.
 
-[Quick start](#quick-start) · [Controls and readouts](#controls-and-readouts) · [Clock rates](#clock-rates) · [Custom equations](#custom-equations) · [Shell experiments](#shell-experiments) · [Reproduction](#reproduce-the-research) · [Model references](#model-references)
+[Quick start](#quick-start) · [Controls and readouts](#controls-and-readouts) · [Experiment tools](#experiment-tools) · [Clock rates](#clock-rates) · [Custom equations](#custom-equations) · [Shell experiments](#shell-experiments) · [Reproduction](#reproduce-the-research) · [Model references](#model-references)
 
 ## Quick start
 
@@ -140,6 +140,16 @@ Run `node verify.cjs` from this directory. Checks cover reference field signs, z
 - `dist/index.html` opens the simulator. `dist/app.js` manages the main tunnel, `dist/physics.js` implements the metrics and ray integration, `dist/equations.js` parses custom profiles, and `dist/view3d.js` draws the orbitable view.
 - `dist/research-view.js` renders the shell experiments using `dist/research-data.js` and `dist/research-rotation.js`.
 - `research/` contains the solvers, data exporters, and derivations. `verify.cjs` exercises the main-tunnel numerical engine.
+
+## Experiment tools
+
+- **Save experiment / Open experiment** round-trip a versioned JSON file. It records both model choices, comparison state, sliders, custom formulas, selected field, clock observer convention, camera, grid, ray toggle, and numerical settings. Photon launch positions follow from the recorded radius, extent, and direction. Open the file in the same version of the simulator to restore the main tunnel. Imports validate slider ranges, the metric family, and the formula before applying the settings.
+- **Field CSV** exports the selected meridional field with panel, model, coordinates, and value. A blank value means there is no fixed-coordinate clock at that sample. **Photon CSV** exports the computed slice paths with ray index, integration step, and coordinate time. Save the experiment JSON too if the CSV needs to be reproduced. Coordinates and times use geometric units.
+- **Guided labs** loads one of three built-in configurations for straight null paths, Natário expansion, or comparing a bubble center clock with a matter-shell cavity clock. Predict the outcome before opening **Expected result**.
+- **Numerical checks** compares minimum Eulerian density on grids with 200 and 400 columns and recomputes photon paths with half the coordinate time step. The report compares positions only at times present in both trajectories, and includes the finer run's normalized Hamiltonian drift. Agreement checks sensitivity to these particular settings.
+- **Directional null energy** evaluates $T_{ab}k^ak^b=\rho+p_r\cos^2\theta+p_t\sin^2\theta$ in the local orthonormal frame for 19 angles from radial to tangential at the selected radius. Spherical symmetry supplies the equivalent remaining directions. This diagnostic is available for the ultrastatic shell, including a custom shell, and flat space. Moving models retain the existing energy diagnostics.
+- **Physical scale** rescales the Einstein-cluster, Einstein–Vlasov, or counterrotating benchmark at fixed compactness. Enter a midpoint radius in meters to see ADM mass and cavity clock lag. The counterrotating case also gives the asymmetric guided-light delay and the rotation rate of an ideal flat circular guide producing the same local Sagnac delay. This comparison uses the small-rotation limit and the guide's local clock.
+- **Graded-index optics** solves the geometric-optics analog of the built-in static shell at the current radius, wall scale, and compactness. Its isotropic radius $q$ satisfies $d\ln q/dr=1/(r\sqrt{1-2m(r)/r})$ and is normalized at infinity. The effective index is $n(q)=r/q$ for the unit-lapse shell. Teal traces solve the gradient-index ray equations, dashed gray traces show the uniform control, and the purple curve shows $n(x)$ through the center. The optical model preserves spatial ray paths in isotropic coordinates. It models material refraction and supplies no gravitational source. [Optical geometry background](https://arxiv.org/abs/1010.3416)
 
 ## Model references
 

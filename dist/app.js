@@ -228,6 +228,7 @@ function update(){
     resize(panel);
     paint(panel);
   }
+  document.dispatchEvent(new Event('tunnel-settings'));
 }
 function updateEquations(selected){
   const key=JSON.stringify([selected,custom.family,custom.formulas]);

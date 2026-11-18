@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="An interactive general relativity laboratory for exploring warp metrics and null geodesics.">
-<title>Warp Photon Wind Tunnel Simulator</title>
+<title>Warp Drive Wind Tunnel</title>
 <link rel="stylesheet" href="style.css">
 <script defer src="equations.js"></script>
 <script defer src="physics.js"></script>
@@ -13,9 +13,11 @@
 <script defer src="research-data.js"></script>
 <script defer src="research-rotation.js"></script>
 <script defer src="research-view.js"></script>
+<script defer src="lab-optics.js"></script>
+<script defer src="lab-tools.js"></script>
 </head>
 <body>
-<header class="top"><div class="brand"><span class="mark" aria-hidden="true">◎</span> Warp Photon Wind Tunnel Simulator</div><nav aria-label="Main"><a href="#tunnel">Simulator</a><a href="#research-lab">Shell experiments</a><button id="open-help" type="button" aria-haspopup="dialog">Help</button></nav></header>
+<header class="top"><div class="brand"><span class="mark" aria-hidden="true">◎</span> Warp Drive Wind Tunnel</div><nav aria-label="Main"><a href="#tunnel">Simulator</a><a href="#research-lab">Shell experiments</a><button id="open-help" type="button" aria-haspopup="dialog">Help</button></nav></header>
 <dialog id="sim-help" aria-labelledby="help-title">
   <form method="dialog" class="help-head">
     <h2 id="help-title">How the wind tunnel works</h2>
@@ -26,6 +28,7 @@
     <dt>Run an experiment</dt><dd>Choose a model and change its speed, radius, or wall scale. Turn on <strong>Compare two models</strong> to use the same launches and field scale in both panels.</dd>
     <dt>Read the views</dt><dd>The <strong>2D slice</strong> maps the field across a plane. The <strong>3D view</strong> shows the reference-radius surface and photon paths rotated around the symmetry axis. Drag the view or focus it and use the arrow keys. Both comparison panels rotate together.</dd>
     <dt>Compare clocks</dt><dd>The <strong>Clock rate</strong> map shows proper time per unit of distant lab time for clocks held in place in the model coordinates. Amber marks positions where that motion cannot be followed by a clock.</dd>
+    <dt>Save and reproduce</dt><dd><strong>Experiment tools</strong> saves runs, exports samples, and tests numerical sensitivity. <strong>Guided labs</strong> loads examples to explore.</dd>
     <dt>Explore the research</dt><dd>Use <strong>Edit equations</strong> to try a custom radial profile. <strong>Shell experiments</strong> shows the separate matter-shell studies. <strong>Model equations and sources</strong> explains the metrics and links to the papers.</dd>
   </dl>
   <p>The models are general-relativity experiments. Photon paths and stress–energy maps describe what a prescribed geometry does and what it would require.</p>
@@ -33,8 +36,8 @@
 <main>
 <section class="intro" id="tunnel">
   <div class="eyebrow"><span></span> GENERAL RELATIVITY LAB</div>
-  <h1>Warp Photon Wind Tunnel Simulator<span>.</span></h1>
-  <p>Explore how prescribed spacetime geometries bend light and what stress–energy their walls require.</p>
+  <h1>Warp Drive Wind Tunnel<span>.</span></h1>
+  <p>Explore warp spacetime models with photon paths, clocks, and matter-shell experiments.</p>
 </section>
 <div class="lab">
 <aside class="controls" aria-label="Simulation controls">
@@ -58,6 +61,7 @@
   </div>
   <label class="check"><input id="rays" type="checkbox" checked> Trace photon paths</label>
   <label class="check"><input id="grid" type="checkbox" checked> Show coordinate grid</label>
+  <a class="model-source-jump" href="#experiment-tools">Experiment tools ↓</a>
   <button class="reset" id="reset" type="button">↺ &nbsp; Reset configuration</button>
 </aside>
 <section class="instrument" aria-label="Field viewport">
@@ -117,6 +121,71 @@
 <section class="notebook" aria-label="Simulation notes">
 <details open id="model-notes"><summary>Model equations and sources</summary><div id="equations"></div><p>The center clock measures proper time at x = y = z = 0. In the built-in translating bubbles, the shift cancels the bubble motion at the center, giving one second of proper time per second of distant lab time even when the exterior cannot support a comoving clock. The Minkowski control and static matter shell in the main tunnel have unit lapse and stationary clocks run at the lab rate. <a href="#research-lab">Shell experiments</a> includes matter-sourced models with a variable lapse and a slower cavity clock.</p><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
 </section>
+<section class="notebook experiment-tools" id="experiment-tools" aria-labelledby="experiment-title">
+  <h2 id="experiment-title">Experiment tools</h2>
+  <div class="experiment-columns">
+    <section aria-labelledby="run-title">
+      <h3 id="run-title">Save and share</h3>
+      <div class="editor-actions">
+        <button id="export-run" type="button">Save experiment</button>
+        <button id="open-run" type="button">Open experiment</button>
+        <input id="run-file" type="file" accept=".json,application/json" hidden>
+        <button id="export-field" type="button">Field CSV</button>
+        <button id="export-rays" type="button">Photon CSV</button>
+      </div>
+      <p id="experiment-status" role="status"></p>
+    </section>
+    <section aria-labelledby="guided-title">
+      <h3 id="guided-title">Guided labs</h3>
+      <label for="guided-lab">Experiment</label>
+      <select id="guided-lab">
+        <option value="flat">Straight rays in flat spacetime</option>
+        <option value="expansion">Zero expansion and negative energy</option>
+        <option value="clocks">Compare a bubble clock and cavity clock</option>
+      </select>
+      <p id="guided-prediction"></p>
+      <button id="load-lab" type="button">Load lab</button>
+      <details><summary>Expected result</summary><p id="guided-result"></p></details>
+    </section>
+    <section aria-labelledby="numerics-title">
+      <h3 id="numerics-title">Numerical checks</h3>
+      <p>Compare density sampling at two resolutions and photon paths with a halved integration step.</p>
+      <button id="run-numerics" type="button">Check current models</button>
+      <div id="numerics-results" role="status"></div>
+    </section>
+    <section aria-labelledby="null-title">
+      <h3 id="null-title">Directional null energy</h3>
+      <p>For the static shell and flat control, sample null directions relative to the radial axis. Radius is measured in simulation units.</p>
+      <label for="null-radius">Sample radius <output id="null-radius-out">2.70 ℓ</output></label>
+      <input id="null-radius" type="range" min=".05" max="6.2" step=".05" value="2.7">
+      <div id="null-results"></div>
+    </section>
+    <section aria-labelledby="scale-title">
+      <h3 id="scale-title">Physical scale</h3>
+      <label for="scale-model">Research benchmark</label>
+      <select id="scale-model">
+        <option value="cluster">Static Einstein cluster</option>
+        <option value="vlasov">Einstein–Vlasov equilibrium</option>
+        <option value="kinetic">Matter-sourced counterrotation</option>
+      </select>
+      <label for="physical-radius">Midpoint radius in meters</label>
+      <input id="physical-radius" type="number" min=".000001" max="1e12" step="any" value="10">
+      <p id="scale-results" role="status"></p>
+      <p>Rescales the same dimensionless geometry. These are gravitational benchmarks at fixed compactness.</p>
+    </section>
+    <section aria-labelledby="optics-title">
+      <h3 id="optics-title">Graded-index optics</h3>
+      <p>Compare the static matter shell's equivalent radial refractive index with a uniform medium. Predict how the wall gradient will bend an off-axis beam.</p>
+      <div class="editor-actions">
+        <button id="optics-run" type="button">Run optics analog</button>
+        <label><input id="optics-uniform" type="checkbox" checked> Uniform control</label>
+      </div>
+      <canvas id="optics-plot" role="img" aria-label="Equivalent graded-index profile and ray paths" hidden></canvas>
+      <p id="optics-result" role="status"></p>
+      <p>The analog reproduces spatial light paths for the static shell. It uses a material index profile and models no change to the surrounding spacetime.</p>
+    </section>
+  </div>
+</section>
 <section id="research-lab" class="research-lab" aria-labelledby="shell-title">
   <div class="eyebrow"><span></span> GENERAL RELATIVITY RESEARCH</div>
   <h2 id="shell-title">Shell experiments</h2>
@@ -164,6 +233,6 @@
   <div id="papers"></div>
 </section>
 </main>
-<footer>Warp Photon Wind Tunnel Simulator <span>Classical general relativity · literature reviewed November 2026</span></footer>
+<footer>Warp Drive Wind Tunnel <span>Classical general relativity · literature reviewed November 2026</span></footer>
 </body>
 </html>
