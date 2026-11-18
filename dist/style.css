@@ -141,3 +141,9 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 30px;disp
 .orbit canvas{touch-action:none;cursor:grab}
 .orbit canvas.dragging{cursor:grabbing}
 .orbit canvas:focus-visible{outline:2px solid var(--mint);outline-offset:-2px}
+#clock-key i{display:inline-block;width:12px;height:9px;margin-right:3px;border:1px solid #aa743c;background:repeating-linear-gradient(135deg,#8d5b28 0 2px,#33231e 2px 4px)}
+.readouts{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1200px){.plots.comparing .readouts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:630px){.readouts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1200px){.plots.comparing .readouts>div:nth-child(3){border-left:0}.plots.comparing .readouts>div:nth-child(n+3){border-top:1px solid var(--line)}}
+@media(max-width:630px){.readouts>div:nth-child(3){border-left:0}.readouts>div:nth-child(n+3){border-top:1px solid var(--line)}}

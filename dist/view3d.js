@@ -37,7 +37,7 @@ const WarpView3D = (() => {
       const rings=14, azimuths=40;
       const mesh=Array.from({length:rings+1},(_,i)=>{
         const angle=Math.PI*i/rings, x=r*Math.cos(angle), y=r*Math.sin(angle);
-        const value=Warp.field(x,y,snapshot)[field];
+        const value=field==='clock'?Warp.clockRate(x,y,snapshot):Warp.field(x,y,snapshot)[field];
         return {
           value,
           points:Array.from({length:azimuths},(_,j)=>{
@@ -52,7 +52,7 @@ const WarpView3D = (() => {
           if(i>0 && i<rings) edge(ring.points[j],ring.points[(j+1)%azimuths],ring.value);
           if(i>0 && j%4===0){
             const prev=mesh[i-1];
-            edge(prev.points[j],ring.points[j],(prev.value+ring.value)/2);
+            edge(prev.points[j],ring.points[j],prev.value===null || ring.value===null?null:(prev.value+ring.value)/2);
           }
         }
       }
@@ -79,8 +79,8 @@ const WarpView3D = (() => {
   function mesh(ctx,edges,limit,foreground){
     for(const {a,b,value} of edges){
       const intensity=limit?Math.min(1,(Math.abs(value)/limit)**.65):0;
-      const color=intensity<.015?'150,168,202':value<0?'231,111,247':'63,224,205';
-      const alpha=foreground?.25+.55*intensity:.10+.20*intensity;
+      const color=value===null?'219,151,72':intensity<.015?'150,168,202':value<0?'231,111,247':'63,224,205';
+      const alpha=value===null?(foreground?.75:.3):foreground?.25+.55*intensity:.10+.20*intensity;
       ctx.strokeStyle='rgba('+color+','+alpha+')';
       ctx.beginPath();
       ctx.moveTo(a[0],a[1]);

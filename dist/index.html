@@ -25,6 +25,7 @@
   <dl>
     <dt>Run an experiment</dt><dd>Choose a model and change its speed, radius, or wall scale. Turn on <strong>Compare two models</strong> to use the same launches and field scale in both panels.</dd>
     <dt>Read the views</dt><dd>The <strong>2D slice</strong> maps the field across a plane. The <strong>3D view</strong> shows the reference-radius surface and photon paths rotated around the symmetry axis. Drag the view or focus it and use the arrow keys. Both comparison panels rotate together.</dd>
+    <dt>Compare clocks</dt><dd>The <strong>Clock rate</strong> map shows proper time per unit of distant lab time for clocks held in place in the model coordinates. Amber marks positions where that motion cannot be followed by a clock.</dd>
     <dt>Explore the research</dt><dd>Use <strong>Edit equations</strong> to try a custom radial profile. <strong>Shell experiments</strong> shows the separate matter-shell studies. <strong>Model equations and sources</strong> explains the metrics and links to the papers.</dd>
   </dl>
   <p>The models are general-relativity experiments. Photon paths and stress–energy maps describe what a prescribed geometry does and what it would require.</p>
@@ -67,12 +68,13 @@
     <button id="reset-camera" type="button" hidden>Reset angle</button>
   </div>
   <div class="layers" role="group" aria-label="Field layer">
-    <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Shift speed</button><button data-field="nec" aria-pressed="false">Local NEC</button>
+    <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Shift speed</button><button data-field="clock" aria-pressed="false">Clock rate</button><button data-field="nec" aria-pressed="false">Local NEC</button>
   </div>
   <p id="plot-error" role="alert" hidden></p>
   <div class="plots" id="plots"></div>
-  <div class="legend" id="field-legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
+  <div class="legend" id="field-legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span id="clock-key" hidden><i aria-hidden="true"></i> No stationary clock</span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
   <p class="launch-note" id="orbit-note" hidden>Drag to rotate or focus the view and use the arrow keys. The mesh samples the selected field at the reference radius. Readouts still use the meridional slice.</p>
+  <p class="launch-note" id="clock-note" hidden>Each clock stays at a fixed position in the model coordinates. For moving models it travels with the bubble. A rate of 1 matches a distant lab clock.</p>
   <p class="launch-note" id="launch-note" hidden></p>
 </section>
 </div>
@@ -81,6 +83,7 @@
     <h3 data-role="title" hidden></h3>
     <div class="viewport"><canvas role="img"></canvas><span class="slice" data-role="slice">z = 0</span></div>
     <div class="readouts">
+      <div><span>CENTER CLOCK</span><strong data-role="clock"></strong><small data-role="clock-note"></small><small data-role="clock-range" hidden></small></div>
       <div><span>MIN. EULERIAN DENSITY</span><strong data-role="density"></strong><small>Visible slice · ℓ⁻²</small></div>
       <div><span>ENERGY CONDITION</span><strong data-role="condition"></strong><small data-role="condition-note"></small></div>
       <div><span>RAY INTEGRATION</span><strong data-role="integration"></strong><small>Max. normalized Hamiltonian drift</small></div>
@@ -112,7 +115,7 @@
   </form>
 </section>
 <section class="notebook" aria-label="Simulation notes">
-<details open id="model-notes"><summary>Model equations and sources</summary><div id="equations"></div><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
+<details open id="model-notes"><summary>Model equations and sources</summary><div id="equations"></div><p>The center clock measures proper time at x = y = z = 0. In the built-in translating bubbles, the shift cancels the bubble motion at the center, giving one second of proper time per second of distant lab time even when the exterior cannot support a comoving clock. The Minkowski control and static matter shell in the main tunnel have unit lapse and stationary clocks run at the lab rate. <a href="#research-lab">Shell experiments</a> includes matter-sourced models with a variable lapse and a slower cavity clock.</p><p>The simulation prescribes a metric and integrates test photons in its symmetry plane using fourth-order Runge–Kutta. The heatmap rescales to the selected field and emphasizes faint values. Coordinates use geometric units (G = c = 1) and an arbitrary length unit ℓ. Scaling a model to a different physical size changes its required density. Moving bubbles use comoving coordinates, so photon motion on screen is relative to the bubble.</p><p>These geometries are mathematical experiments. A viable drive would need a realizable matter source and a way to create, control, and sustain the geometry.</p></details>
 </section>
 <section id="research-lab" class="research-lab" aria-labelledby="shell-title">
   <div class="eyebrow"><span></span> GENERAL RELATIVITY RESEARCH</div>

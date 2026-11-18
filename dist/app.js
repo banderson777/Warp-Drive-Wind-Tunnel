@@ -61,7 +61,7 @@ for(const [year,title,note,url] of library){
   article.append(label,link,description);
   byId('papers').append(article);
 }
-const fieldNames={rho:'Eulerian density ρ · ℓ⁻²',expansion:'Volume expansion θ · ℓ⁻¹',shift:'Bubble flow magnitude · c',nec:'Minimum null contraction · ℓ⁻²'};
+const fieldNames={rho:'Eulerian density ρ · ℓ⁻²',expansion:'Volume expansion θ · ℓ⁻¹',shift:'Bubble flow magnitude · c',clock:'Stationary clock rate · dτ/dt',nec:'Minimum null contraction · ℓ⁻²'};
 const background=[8,15,28], negative=[231,111,247], positive=[63,224,205];
 const scientific=value=>value===0?'0':value.toExponential(2);
 const extent=6.2, aspect=1.65, vertical=extent/aspect;
@@ -173,6 +173,10 @@ function update(){
     panel.get('title').textContent=title;
     panel.get('title').hidden=!comparing;
     panel.canvas.setAttribute('aria-label',title+' · '+fieldNames[layer]+(in3D?' 3D rotational view':' cross-section'));
+    const center=Warp.clockRate(0,0,snapshot);
+    panel.get('clock').textContent=center===null?'Unavailable':center.toFixed(6)+' s/s';
+    panel.get('clock-note').textContent=center===null?'Fixed-center motion is not timelike.':
+      center===1?'Matches distant lab time.':'Proper seconds per distant lab second.';
     const vacuum=snapshot.speed===0 && !['shell','pocket'].includes(model);
     panel.get('condition').textContent=vacuum?'Vacuum':models[model][1];
     panel.get('condition-note').textContent=vacuum?models.flat[2]:models[model][2];
@@ -187,6 +191,15 @@ function update(){
       panel.samples=sample(panel);
       panel.sampleKey=sampleKey;
     }
+    const clockRange=panel.get('clock-range');
+    clockRange.hidden=layer!=='clock' || model==='flat';
+    if(!clockRange.hidden){
+      const {insideMin,insideMax,insideUnavailable}=panel.samples;
+      const range=insideMin===Infinity?'No stationary clocks sampled':
+        insideMin.toFixed(3)+'–'+insideMax.toFixed(3)+' s/s';
+      clockRange.textContent='Inside reference radius: '+range+
+        (insideUnavailable && insideMin!==Infinity?' · some positions unavailable':'')+'.';
+    }
     if(snapshot.custom){
       const violation=snapshot.model==='shell'?panel.samples.minNec < -1e-10:panel.samples.minRho < -1e-10;
       panel.get('condition').textContent=violation?(snapshot.model==='shell'?'NEC violated':'WEC violated'):'Undetermined';
@@ -199,11 +212,15 @@ function update(){
     button.setAttribute('aria-pressed',button.dataset.field===layer);
   }
   const negativeValues=active.some(p=>p.samples.min<0), positiveValues=active.some(p=>p.samples.max>0);
-  const limit=Math.max(...active.map(p=>Math.max(-p.samples.min,p.samples.max)));
+  const clock=layer==='clock';
+  const limit=clock?1:Math.max(...active.map(p=>Math.max(-p.samples.min,p.samples.max)));
+  byId('clock-note').hidden=!clock;
+  byId('clock-key').hidden=!clock || !active.some(p=>p.samples.unavailable);
+
   byId('legend-title').textContent=(comparing?'Shared scale · ':'')+fieldNames[layer];
   byId('legend-min').textContent=scientific(negativeValues?-limit:0);
-  byId('legend-max').textContent=scientific(positiveValues?limit:0);
-  byId('gradient').style.background=negativeValues && positiveValues?'linear-gradient(90deg,#e76ff7,#080f1c,#3fe0cd)':negativeValues?'linear-gradient(90deg,#e76ff7,#080f1c)':positiveValues?'linear-gradient(90deg,#080f1c,#3fe0cd)':'#28364d';
+  byId('legend-max').textContent=scientific(clock || positiveValues?limit:0);
+  byId('gradient').style.background=clock?'linear-gradient(90deg,#080f1c,#3fe0cd)':negativeValues && positiveValues?'linear-gradient(90deg,#e76ff7,#080f1c,#3fe0cd)':negativeValues?'linear-gradient(90deg,#e76ff7,#080f1c)':positiveValues?'linear-gradient(90deg,#080f1c,#3fe0cd)':'#28364d';
   byId('plots').hidden=false;
   byId('field-legend').hidden=false;
   for(const panel of active){
@@ -259,19 +276,36 @@ function sample(panel){
   const nx=200, ny=Math.round(nx/aspect), values=new Float64Array(nx*ny);
   panel.heat.width=nx;
   panel.heat.height=ny;
-  let min=0,max=0,minRho=0,minNec=0;
+  let min=0,max=0,minRho=0,minNec=0,unavailable=false;
+  const center=layer==='clock'?Warp.clockRate(0,0,panel.snapshot):null;
+  let insideMin=center===null?Infinity:center, insideMax=center===null?0:center;
+  let insideUnavailable=center===null;
   for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){
     const x=(2*(i+.5)/nx-1)*extent, y=(1-2*(j+.5)/ny)*vertical;
-    const result=Warp.field(x,y,panel.snapshot), value=result[layer];
-    if(!Number.isFinite(value) || !Number.isFinite(result.rho)) throw new Error('The sampled field overflows the numeric range.');
+    const result=Warp.field(x,y,panel.snapshot);
+    if(!Number.isFinite(result.rho)) throw new Error('The sampled field overflows the numeric range.');
+    minRho=Math.min(minRho,result.rho);
+    const value=layer==='clock'?Warp.clockRate(x,y,panel.snapshot):result[layer];
+    if(layer==='clock' && Math.hypot(x,y)<panel.snapshot.radius){
+      if(value===null) insideUnavailable=true;
+      else{
+        insideMin=Math.min(insideMin,value);
+        insideMax=Math.max(insideMax,value);
+      }
+    }
+    if(value===null && layer==='clock'){
+      values[j*nx+i]=NaN;
+      unavailable=true;
+      continue;
+    }
+    if(!Number.isFinite(value)) throw new Error('The sampled field overflows the numeric range.');
     values[j*nx+i]=value;
     min=Math.min(min,value);
     max=Math.max(max,value);
-    minRho=Math.min(minRho,result.rho);
     if(result.nec!==null) minNec=Math.min(minNec,result.nec);
   }
   panel.get('density').textContent=scientific(minRho);
-  return {min,max,values,minRho,minNec};
+  return {min,max,values,minRho,minNec,unavailable,insideMin,insideMax,insideUnavailable};
 }
 function colorize(panel,limit){
   const {heat,hc,samples}=panel;
@@ -280,6 +314,12 @@ function colorize(panel,limit){
   panel.limit=limit;
   const buffer=hc.createImageData(heat.width,heat.height);
   samples.values.forEach((v,i)=>{
+    if(Number.isNaN(v)){
+      const stripe=(i%heat.width+Math.floor(i/heat.width))%7<2;
+      const color=stripe?[141,91,40]:[51,35,30];
+      buffer.data.set([...color,255],i*4);
+      return;
+    }
     const color=v<0?negative:positive;
     const intensity=v===0?0:(Math.abs(v)/limit)**.65;
     for(let c=0;c<3;c++) buffer.data[i*4+c]=background[c]+intensity*(color[c]-background[c]);
@@ -406,6 +446,7 @@ function queue(){
       plots.hidden=true;
       legend.hidden=true;
       byId('launch-note').hidden=true;
+      byId('clock-note').hidden=true;
     }
   });
 }

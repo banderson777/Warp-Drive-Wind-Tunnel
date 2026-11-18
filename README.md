@@ -63,3 +63,9 @@ The **Matter-sourced counterrotation** mode solves for the first-order shift fro
 Open **Help** for an overview of the simulator and its controls. In the main viewport, choose **3D view** and drag with a mouse or one finger, or focus a plot and use the arrow keys. **Reset angle** restores the initial camera. Comparison panels share the camera.
 
 The mesh is a reference-radius surface colored by the selected field. The photon bundle rotates selected numerical meridional paths around the model's symmetry axis. The energy and integration readouts still summarize the original slice. Switch to **2D slice** to inspect the planar field.
+
+## Clock rates
+
+Choose **Clock rate** for a shared 0–1 map of proper seconds per distant lab second. The clocks are held at fixed spatial coordinates in each model, so in the translating metrics they travel with the bubble. The **Center clock** readout reports the central rate, and the layer adds the sampled range inside the reference radius. Amber marks motion that is null or spacelike, where a physical stationary clock cannot exist.
+
+In the main tunnel the lapse is one. A stationary clock has (d\tau/dt=\sqrt{-g_{tt}}) wherever its worldline is timelike. The built-in moving bubble centers, flat space, and the ultrastatic shell have rate 1 at the center. Wall and exterior rates can differ for clocks constrained to the moving coordinates. The separate **Shell experiments** use the **Clock deficit** layer for matter-sourced shells, whose nonunit lapse can slow a stationary cavity clock relative to infinity.

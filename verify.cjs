@@ -117,3 +117,17 @@ const projection = View3D.project(800,400,6.2,View3D.defaultCamera);
 assert.deepEqual(projection([0,0,0]),center);
 assert.notDeepEqual(projection([2,1,0]),View3D.project(800,400,6.2,{yaw:0,pitch:0})([2,1,0]));
 console.log('3D photon bundle and camera checks passed.');
+
+// Fixed-coordinate proper time is observer-specific and vanishes at the null boundary.
+for(const model of [flat,shell,alcubierre,natario,pocket,{...alcubierre,speed:1.5}]){
+  assert.equal(Warp.clockRate(0,0,model),1);
+}
+assert.equal(Warp.clockRate(20,0,flat),1);
+assert.equal(Warp.clockRate(20,0,shell),1);
+assert(Math.abs(Warp.clockRate(20,0,alcubierre)-Math.sqrt(1-settings.speed**2))<1e-12);
+assert.equal(Warp.clockRate(20,0,{...alcubierre,speed:1}),null);
+assert.equal(Warp.clockRate(20,0,{...alcubierre,speed:1.5}),null);
+assert(Math.abs(Warp.clockRate(0,0,zero)-Math.sqrt(1-settings.speed**2))<1e-12);
+assert.equal(Warp.clockRate(0,0,{...zero,speed:1.5}),null);
+assert.equal(Warp.clockRate(0,0,{...pocket,custom:Equations.create('pocket',{f:'0',B:'4'})}),null);
+console.log('Clock rates, moving and static centers, and null boundaries passed.');

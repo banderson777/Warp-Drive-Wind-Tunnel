@@ -58,6 +58,15 @@ const Warp = (() => {
     const g=s.model==='natario' && r ? df/(2*r) : 0;
     return [s.speed*(f+g*(y*y+z*z)), -s.speed*g*x*y, -s.speed*g*x*z];
   }
+  function clockRate(x,y,s) {
+    // A clock held at fixed spatial coordinates follows the coordinate time line.
+    // Its proper time comes from -g_tt, with t normalized to the distant lab.
+    if(s.model==='flat' || s.model==='shell') return 1;
+    const [ux,uy,uz]=flow(x,y,0,s);
+    const scale=s.model==='pocket'?pocket(Math.hypot(x,y),s)[0]:1;
+    const speed=scale*Math.hypot(ux-s.speed,uy,uz);
+    return speed<1?Math.sqrt((1-speed)*(1+speed)):null;
+  }
   function field(x,y,s) {
     const r=Math.hypot(x,y);
     if(s.model==='shell') {
@@ -140,6 +149,6 @@ const Warp = (() => {
       return {path,drift};
     });
   }
-  return {profile,shell,flow,field,hamiltonian,step,rayDirection,rayTimeStep,rays,validate};
+  return {profile,shell,flow,field,clockRate,hamiltonian,step,rayDirection,rayTimeStep,rays,validate};
 })();
 if(typeof module==='object') module.exports=Warp;
