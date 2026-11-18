@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="style.css">
 <script defer src="equations.js"></script>
 <script defer src="physics.js"></script>
+<script defer src="nec.js"></script>
 <script defer src="compute-core.js"></script>
 <script defer src="compute-client.js"></script>
 <script defer src="view3d.js"></script>
@@ -79,11 +80,12 @@
     <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Shift speed</button><button data-field="clock" aria-pressed="false">Clock rate</button><button data-field="nec" aria-pressed="false">Local NEC</button>
   </div>
   <p id="plot-error" role="alert" hidden></p>
-  <p id="plot-progress" class="launch-note" role="status" hidden>Calculating custom geometry… <button id="cancel-calculation" type="button">Cancel calculation</button></p>
+  <p id="plot-progress" class="launch-note" role="status" hidden>Calculating spacetime fields… <button id="cancel-calculation" type="button">Cancel calculation</button></p>
   <div class="plots" id="plots"></div>
   <div class="legend" id="field-legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span id="clock-key" hidden><i aria-hidden="true"></i> No stationary clock</span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
   <p class="launch-note" id="orbit-note" hidden>Drag to rotate or focus the view and use the arrow keys. The mesh samples the selected field at the reference radius. Readouts still use the meridional slice.</p>
   <p class="launch-note" id="clock-note" hidden>Each clock stays at a fixed position in the model coordinates. For moving models it travels with the bubble. A rate of 1 matches a distant lab clock.</p>
+  <p class="launch-note" id="nec-note" hidden>Moving bubbles show the lowest value among 198 sampled null directions per point. Click the 2D slice or use the <a href="#null-title">directional probe</a> to inspect a location.</p>
   <p class="launch-note" id="launch-note" hidden></p>
 </section>
 </div>
@@ -168,9 +170,11 @@
     </section>
     <section aria-labelledby="null-title">
       <h3 id="null-title">Directional null energy</h3>
-      <p>For the static shell and flat control, sample null directions relative to the radial axis. Radius is measured in simulation units.</p>
-      <label for="null-radius">Sample radius <output id="null-radius-out">2.70 ℓ</output></label>
-      <input id="null-radius" type="range" min=".05" max="6.2" step=".05" value="2.7">
+      <p>Set a point on the meridional slice. The probe shows Eulerian density and the lowest null-energy contraction in the available direction set.</p>
+      <label for="null-x">Axial x <output id="null-x-out">0.00 ℓ</output></label>
+      <input id="null-x" type="range" min="-6.2" max="6.2" step=".05" value="0">
+      <label for="null-y">Transverse y <output id="null-y-out">2.10 ℓ</output></label>
+      <input id="null-y" type="range" min="-3.75" max="3.75" step=".05" value="2.1">
       <div id="null-results"></div>
     </section>
     <section aria-labelledby="scale-title">

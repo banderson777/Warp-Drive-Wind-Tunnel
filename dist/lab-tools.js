@@ -40,7 +40,7 @@
     const selected=run.compare?run.models:run.models.slice(0,1);
     const parameters=Object.fromEntries(inputs.map(id=>[id,run.parameters[id]]));
     const settings=selected.map(id=>settingsFor(id,parameters,candidate));
-    if(run.field==='nec' && settings.some(s=>!['flat','shell'].includes(s.model))) throw Error('Local NEC is unavailable for these models.');
+    if(run.field==='nec' && settings.some(s=>!WarpNec.supported(s))) throw Error('Local NEC is unavailable for these models.');
     const expected=numericalSettings(settings);
     const actual=run.numerical;
     if(!actual || !Object.keys(expected).every(key=>JSON.stringify(expected[key])===JSON.stringify(actual[key])))
@@ -212,26 +212,52 @@
   });
 
   function updateNull(){
-    const node=byId('null-results'), r=Number(byId('null-radius').value);
-    byId('null-radius-out').textContent=r.toFixed(2)+' ℓ';
+    const node=byId('null-results'), x=Number(byId('null-x').value), y=Number(byId('null-y').value);
+    const r=Math.hypot(x,y);
+    byId('null-x-out').textContent=x.toFixed(2)+' ℓ';
+    byId('null-y-out').textContent=y.toFixed(2)+' ℓ';
     node.replaceChildren();
     const settings=activeSettings(), ids=activeIds();
     for(const [i,s] of settings.entries()){
+      const name=modelNames(ids[i]);
       try{
-        if(!['flat','shell'].includes(s.model)){
-          resultRow(node,modelNames(ids[i]),'Directional tensor sampling unavailable for this model.');
+        if(!WarpNec.supported(s)){
+          resultRow(node,name,'Directional tensor sampling unavailable for this model.');
+          continue;
+        }
+        const rho=Warp.field(x,y,s).rho;
+        if(WarpNec.moving(s)){
+          const {minimum,direction,negative,total}=WarpNec.probe(x,y,s);
+          resultRow(node,name,'Eulerian density '+scientific(rho)+' ℓ⁻². Sampled minimum '+scientific(minimum)+
+            ' ℓ⁻². '+(s.speed===0?'All directions tie.':'Direction (x, y, z): ('+
+              direction.map(v=>Math.abs(v)<.0005?'0.000':v.toFixed(3)).join(', ')+').')+
+            ' '+negative+'/'+total+' samples below −10⁻¹² ℓ⁻².');
           continue;
         }
         const angles=Array.from({length:19},(_,j)=>Warp.nullEnergy(r,Math.cos(j*Math.PI/36),s));
         const negatives=angles.flatMap((value,j)=>value<0?[j*5]:[]);
         const range=negatives.length?' Violating sampled angles: '+negatives[0]+'°–'+negatives[negatives.length-1]+'° from radial.':'';
-        resultRow(node,modelNames(ids[i]),negatives.length+'/19 sampled angles violate NEC.'+range+' Radial '+
-          scientific(angles[0])+', tangential '+scientific(angles[18])+', sampled min '+
-          scientific(Math.min(...angles))+' ℓ⁻².');
-      }catch(error){resultRow(node,modelNames(ids[i]),error.message);}
+        resultRow(node,name,'Eulerian density '+scientific(rho)+' ℓ⁻². '+negatives.length+
+          '/19 sampled angles violate NEC.'+range+' Radial '+scientific(angles[0])+', tangential '+
+          scientific(angles[18])+', sampled min '+scientific(Math.min(...angles))+' ℓ⁻².');
+      }catch(error){resultRow(node,name,error.message);}
     }
   }
-  byId('null-radius').addEventListener('input',updateNull);
+  for(const id of ['null-x','null-y']) byId(id).addEventListener('input',()=>{
+    updateNull();
+    if(!byId('plots').hidden) panels.filter(panel=>!panel.element.hidden).forEach(paint);
+  });
+  for(const panel of panels) panel.canvas.addEventListener('click',event=>{
+    if(in3D || panel.field!=='nec') return;
+    const bounds=panel.canvas.getBoundingClientRect(), unit=panel.w/(2*extent);
+    const point=[(event.clientX-bounds.left-panel.w/2)/unit,
+      (panel.h/2-event.clientY+bounds.top)/unit];
+    for(const [i,id] of ['null-x','null-y'].entries()){
+      const slider=byId(id), step=Number(slider.step);
+      slider.value=Math.min(Number(slider.max),Math.max(Number(slider.min),Math.round(point[i]/step)*step));
+    }
+    byId('null-y').dispatchEvent(new Event('input'));
+  });
   document.addEventListener('tunnel-settings',updateNull);
   updateNull();
 

@@ -5,7 +5,7 @@ const WarpCompute = (() => {
 
   async function run(job,signal){
     if(signal && signal.aborted) throw abort();
-    if(job.kind==='panel' && !job.snapshot.custom) return WarpComputeCore.runSync(job);
+    if(!WarpComputeCore.needsWorker(job)) return WarpComputeCore.runSync(job);
     if(workerUrl.protocol==='file:' || typeof Worker==='undefined')
       return WarpComputeCore.runCooperative(job,signal);
     let worker;

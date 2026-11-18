@@ -17,7 +17,7 @@ The calculation and packaged research data work offline. The simulator uses syst
 ## Models and assumptions
 
 - Minkowski control, Alcubierre bubble, divergence-free Natário bubble, Van Den Broeck conformal pocket, and an ultrastatic matter shell.
-- Meridional heatmaps of Eulerian density, volume expansion, and bubble flow. The static shell and vacuum also have local NEC maps.
+- Meridional heatmaps of Eulerian density, volume expansion, and bubble flow. The Alcubierre and Natário presets, static shell, and vacuum also have local NEC maps.
 - Test photons evolved in the symmetry plane with a stationary null Hamiltonian and fourth-order Runge–Kutta. The interface reports normalized drift in the conserved Hamiltonian. A finite integration window can truncate plotted paths.
 - In-app equations and a research library covering proposals beyond the implemented models, including the Fuchs constant-velocity shell and open-source Warp Factory and Warpax. The browser engine implements the displayed equations directly.
 
@@ -53,7 +53,7 @@ Geometric units set (G=c=1). Lengths use a fiducial unit **ℓ**, times use **�
 | **Expansion** | The local volume expansion or contraction of the normal observer congruence. |
 | **Shift speed** | Magnitude of the modeled bubble flow. Clock rate uses the motion relative to the normal observers instead. |
 | **Clock rate** | Proper seconds per distant lab second for a clock held at a fixed model position. |
-| **Local NEC** | Minimum local null stress contraction in the flat control and ultrastatic shell. Only available when every displayed model supports the map. |
+| **Local NEC** | Lowest sampled null contraction for the built-in Alcubierre and Natário bubbles. Flat space and the ultrastatic shell use their exact directional extrema. Available when every displayed model supports the map. |
 
 Use the field legend for units and signs. For signed maps, purple indicates negative values and teal positive values. Field maps emphasize weak features with a nonlinear color scale. The clock map uses a fixed range shared across all runs.
 
@@ -154,13 +154,13 @@ The page uses a document Content Security Policy to restrict executable resource
 - **Field CSV** exports the selected meridional field with panel, model, coordinates, and value. A blank value means there is no fixed-coordinate clock at that sample. **Photon CSV** exports the computed slice paths with ray index, integration step, and coordinate time. Save the experiment JSON too if the CSV needs to be reproduced. Coordinates and times use geometric units.
 - **Guided labs** loads one of three built-in configurations for straight null paths, Natário expansion, or comparing a bubble center clock with a matter-shell cavity clock. Predict the outcome before opening **Expected result**.
 - **Numerical checks** compares minimum Eulerian density on grids with 200 and 400 columns and recomputes photon paths with half the coordinate time step. The report compares positions only at times present in both trajectories, and includes the finer run's normalized Hamiltonian drift. Agreement checks sensitivity to these particular settings.
-- **Directional null energy** evaluates $T_{ab}k^ak^b=\rho+p_r\cos^2\theta+p_t\sin^2\theta$ in the local orthonormal frame for 19 angles from radial to tangential at the selected radius. Spherical symmetry supplies the equivalent remaining directions. This diagnostic is available for the ultrastatic shell, including a custom shell, and flat space. Moving models retain the existing energy diagnostics.
+- **Directional null energy** probes a point in the 2D slice. Use the axial and transverse sliders or click the **Local NEC** map. The amber cross marks the probe location. For Alcubierre and Natário the probe compares Eulerian density with the lowest contraction among 198 sampled directions and reports the corresponding unit vector in the local spatial frame. For the ultrastatic shell and flat control it evaluates $T_{ab}k^ak^b=\rho+p_r\cos^2\theta+p_t\sin^2\theta$ in the local orthonormal frame for 19 angles from radial to tangential at the selected radius. Spherical symmetry supplies the equivalent remaining directions. The shell probe includes custom shells. Moving custom metrics and the Van Den Broeck pocket retain their existing diagnostics.
 - **Physical scale** rescales the Einstein-cluster, Einstein–Vlasov, or counterrotating benchmark at fixed compactness. Enter a midpoint radius in meters to see ADM mass and cavity clock lag. The counterrotating case also gives the asymmetric guided-light delay and the rotation rate of an ideal flat circular guide producing the same local Sagnac delay. This comparison uses the small-rotation limit and the guide's local clock.
 - **Graded-index optics** solves the geometric-optics analog of the built-in static shell at the current radius, wall scale, and compactness. Its isotropic radius $q$ satisfies $d\ln q/dr=1/(r\sqrt{1-2m(r)/r})$ and is normalized at infinity. The effective index is $n(q)=r/q$ for the unit-lapse shell. Teal traces solve the gradient-index ray equations, dashed gray traces show the uniform control, and the purple curve shows $n(x)$ through the center. The optical model preserves spatial ray paths in isotropic coordinates. It models material refraction and supplies no gravitational source. [Optical geometry background](https://arxiv.org/abs/1010.3416)
 
 ## Independent solver benchmarks
 
-In **Experiment tools**, download the Alcubierre or Natário experiment and reopen it with **Open experiment**. The fixtures use the same built-in profiles, speed (0.65 c), radius (2.1 ℓ), and wall scale (0.37 ℓ). The companion CSVs compare the actual browser engine to [Warpax](https://github.com/anindex/warpax) on two nested grids and include the reference orthonormal stress tensor. The grids in the CSVs are independent benchmark domains. Reopening the experiment restores the standard viewport and numerical settings.
+In **Experiment tools**, download the Alcubierre or Natário experiment and reopen it with **Open experiment**. The fixtures use the same built-in profiles, speed (0.65 c), radius (2.1 ℓ), and wall scale (0.37 ℓ). The companion CSVs compare the actual browser engine to [Warpax](https://github.com/anindex/warpax) on two nested grids and include the reference orthonormal stress tensor. The directional NEC implementation also replays the reference stress tensors and verifies all ten independent components. The grids in the CSVs are independent benchmark domains. Reopening the experiment restores the standard viewport and numerical settings.
 
 [Comparison method, results, and how to regenerate the datasets](research/benchmark_warpax.md) · [Benchmark files](dist/benchmarks)
 

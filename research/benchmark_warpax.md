@@ -21,7 +21,15 @@ Warpax uses its built-in Alcubierre metric in lab coordinates, with `sigma = 1 /
 
 The Natário benchmark constructs the wind tunnel's specific divergence-free profile by differentiating the vector potential (vf(r)(\mathbf e_x\times\mathbf r)/2) with JAX. It supplies the resulting metric to Warpax's full four-dimensional curvature chain. At the origin the radial profile uses its even Taylor expansion to avoid differentiating the radial norm through zero. The browser independently evaluates its spatial-gradient density formula. The pinned solver computes (T=G/(8\pi)) by automatic differentiation. The scalar expansion reference uses the divergence of the normal and the unit magnitude of the metric determinant.
 
-The benchmark verifies the sampled density and expansion for these two settings against a separate solver. The reference CSVs additionally include the full stress tensor, for which this benchmark has no browser-side comparison. Photon accuracy, energy-condition certification, and dynamical realizability are outside this test.
+The benchmark verifies the sampled density and expansion for these two settings against a separate solver. The reference CSVs additionally include the full stress tensor. The follow-up test below uses it to check the browser’s directional null-energy implementation. Photon accuracy, energy-condition certification, and dynamical realizability are outside these tests.
+
+## Follow-up benchmark for the directional NEC map
+
+The browser uses centered finite differences for the first and second derivatives of the stationary comoving shift. It constructs the Christoffel symbols, computes the Ricci and Einstein tensors, and transforms the stress tensor into the orthonormal frame of the Eulerian normal. This implementation uses the unit lapse and flat spatial slices of the built-in Alcubierre and Natário metrics.
+
+On the 49 × 49 benchmark, the largest component differences across all ten symmetric tensor components were **2.31 × 10⁻⁸ ℓ⁻²** for Alcubierre and **2.22 × 10⁻⁷ ℓ⁻²** for Natário. Halving the derivative step from 0.001 to 0.0005 times the wall scale reduced these to approximately **5.88 × 10⁻⁹** and **5.54 × 10⁻⁸ ℓ⁻²**, respectively. Run `node verify.cjs` to repeat the component checks and compare the sampled minima against the Warpax tensors.
+
+The browser evaluates $T_{ab}k^ak^b$ with $k=(1,\mathbf s)$ in the local orthonormal frame and $|\mathbf s|=1$. It samples 192 approximately uniform directions over the sphere and six axis directions. A negative contraction is a candidate violation that can be checked against the benchmark accuracy. The lowest sample is an upper bound on the true directional minimum for a fixed tensor. Near-zero values can be sensitive to differencing, and a nonnegative set of samples cannot certify NEC. The reference-parameter minima sampled on the 49 × 49 grid were approximately **−0.1019 ℓ⁻²** for Alcubierre and **−0.5531 ℓ⁻²** for Natário. The direction probe uses this same sampling set and counts contractions below −10⁻¹² ℓ⁻². That count is a descriptive numerical threshold, not a certification margin. [Observer-robust methods](https://arxiv.org/abs/2602.18023) · [Generic warp-drive NEC constraints](https://arxiv.org/abs/2105.03079)
 
 ## Download or reproduce
 

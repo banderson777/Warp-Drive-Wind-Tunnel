@@ -2,6 +2,13 @@
 // Shared by the worker and cooperative local-file fallback.
 const WarpComputeCore = (() => {
   const timeout=15000;
+  const needsWorker=job=>job.kind!=='panel' || job.snapshot.custom ||
+    (job.field==='nec' && WarpNec.moving(job.snapshot));
+  function valueAt(x,y,s,field,existing){
+    if(field==='clock') return Warp.clockRate(x,y,s);
+    if(field==='nec' && WarpNec.moving(s)) return WarpNec.probe(x,y,s).minimum;
+    return (existing || Warp.field(x,y,s))[field];
+  }
   function* sample(s,field,extent,aspect,nx){
     const ny=Math.round(nx/aspect), vertical=extent/aspect;
     const values=field===null?null:new Float64Array(nx*ny);
@@ -16,7 +23,7 @@ const WarpComputeCore = (() => {
         if(!Number.isFinite(result.rho)) throw Error('The sampled density overflows the numeric range.');
         minRho=Math.min(minRho,result.rho);
         if(field===null) continue;
-        const value=field==='clock'?Warp.clockRate(x,y,s):result[field];
+        const value=valueAt(x,y,s,field,result);
         if(field==='clock' && Math.hypot(x,y)<s.radius){
           if(value===null) insideUnavailable=true;
           else{
@@ -46,11 +53,13 @@ const WarpComputeCore = (() => {
     if(s.custom) Warp.validate(s,extent);
     if(kind==='panel'){
       const samples=yield* sample(s,field,extent,aspect,200);
-      if(s.custom){
+      if(field==='nec' && WarpNec.moving(s)) samples.surface=[];
+      if(s.custom || samples.surface){
         // Verify the actual 3D mesh positions as well as the meridional grid.
         for(let i=0;i<=14;i++){
           const angle=Math.PI*i/14, x=s.radius*Math.cos(angle), y=s.radius*Math.sin(angle);
-          const meshValue=field==='clock'?Warp.clockRate(x,y,s):Warp.field(x,y,s)[field];
+          const meshValue=valueAt(x,y,s,field);
+          if(samples.surface) samples.surface.push(meshValue);
           if(meshValue!==null && !Number.isFinite(meshValue)) throw Error('The 3D mesh overflows the numeric range.');
         }
       }
@@ -92,5 +101,5 @@ const WarpComputeCore = (() => {
       await new Promise(resolve=>setTimeout(resolve,0));
     }
   }
-  return {runSync,runCooperative,timeout};
+  return {runSync,runCooperative,timeout,needsWorker};
 })();

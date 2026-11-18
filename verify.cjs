@@ -168,6 +168,8 @@ console.log('Strict equation input and resumable photon integration checks passe
 const fs = require('fs');
 const path = require('path');
 const benchmarks = path.join(__dirname,'dist','benchmarks');
+const Nec = require('./dist/nec');
+const tensorIndices=[0,1,2,3,5,6,7,10,11,15];
 for(const name of ['alcubierre','natario']){
   const {parameters,models}=JSON.parse(fs.readFileSync(path.join(benchmarks,name+'.json'),'utf8'));
   assert.equal(models[0],name);
@@ -176,18 +178,41 @@ for(const name of ['alcubierre','natario']){
     const [header,...rows]=fs.readFileSync(path.join(benchmarks,name+'-'+grid+'.csv'),'utf8').trim().split('\n');
     assert.equal(rows.length,grid*grid);
     assert(header.startsWith('x_l,y_l,rho_wind_tunnel,rho_warpax,delta_rho,'));
-    let maxDensity=0, maxHalfStep=0;
+    let maxDensity=0, maxHalfStep=0, maxTensor=0, maxTensorHalf=0, maxSampledError=0;
     for(const row of rows){
-      const [x,y,recorded,rho,,recordedExpansion,expansion]=row.split(',').map(Number);
+      const columns=row.split(',').map(Number);
+      const [x,y,recorded,rho,,recordedExpansion,expansion]=columns;
       const observed=Warp.field(x,y,benchmark);
       assert(Math.abs(observed.rho-recorded)<1e-11);
       assert(Math.abs(observed.expansion-recordedExpansion)<2e-12);
       assert(Math.abs(observed.expansion-expansion)<2e-12);
       maxDensity=Math.max(maxDensity,Math.abs(observed.rho-rho));
       if(name==='natario') maxHalfStep=Math.max(maxHalfStep,Math.abs(Warp.field(x,y,benchmark,0.00005).rho-rho));
+      const actual=Nec.tensor(x,y,0,benchmark);
+      const finerTensor=Nec.tensor(x,y,0,benchmark,.0005);
+      const expected=new Float64Array(16);
+      tensorIndices.forEach((index,i)=>{
+        expected[index]=expected[(index%4)*4+(index>>2)]=columns[10+i];
+        maxTensor=Math.max(maxTensor,Math.abs(actual[index]-expected[index]));
+        maxTensorHalf=Math.max(maxTensorHalf,Math.abs(finerTensor[index]-expected[index]));
+      });
+      const sampled=Nec.directions(actual);
+      maxSampledError=Math.max(maxSampledError,Math.abs(sampled.minimum-Nec.directions(expected).minimum));
+      assert(sampled.direction.every(Number.isFinite));
+      assert(Math.abs(Math.hypot(...sampled.direction)-1)<1e-12);
     }
     assert(maxDensity<(name==='natario'?2e-9:2e-12));
     if(name==='natario') assert(maxHalfStep<.35*maxDensity);
+    assert(maxTensor<5e-7);
+    assert(maxSampledError<1.5e-6);
+    assert(maxTensorHalf<.35*maxTensor);
+    console.log(name,grid+'×'+grid,'max stress error',maxTensor.toExponential(3),
+      'half-step',maxTensorHalf.toExponential(3));
   }
 }
-console.log('Both Warpax reference grids replayed for both metrics.');
+const offAxis=Nec.probe(.2,R,natario);
+assert(offAxis.minimum<-.1 && offAxis.negative>0);
+const zeroTensor=Nec.tensor(R,R,0,{...alcubierre,speed:0});
+assert(zeroTensor.every(value=>value===0));
+assert(Nec.supported(shell) && !Nec.supported(zero) && !Nec.supported(pocket));
+console.log('Warpax field, full stress tensor, and sampled null map checks passed on both grids.');

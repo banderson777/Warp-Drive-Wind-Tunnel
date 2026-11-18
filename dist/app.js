@@ -169,7 +169,7 @@ async function applyEquation(event){
     const family=byId('equation-family').value;
     const candidate=WarpEquations.create(family,Object.fromEntries(new FormData(event.currentTarget)));
     const values=currentValues(), settings=selected.map(id=>settingsFor(id,values,candidate));
-    const field=layer==='nec' && settings.some(s=>!['flat','shell'].includes(s.model))?'rho':layer;
+    const field=layer==='nec' && settings.some(s=>!WarpNec.supported(s))?'rho':layer;
     status.classList.remove('error');
     status.textContent='Validating the equation and calculating the view…';
     await getPanelData(panelJobs(settings,field,byId('rays').checked),controller.signal);
@@ -195,11 +195,11 @@ async function update(signal){
   const active=panels.slice(0,selected.length);
   const values=currentValues();
   const settings=selected.map(model=>settingsFor(model,values));
-  const supportsNEC=settings.every(s=>['shell','flat'].includes(s.model));
+  const supportsNEC=settings.every(WarpNec.supported);
   const field=layer==='nec' && !supportsNEC?'rho':layer;
   const traceEnabled=byId('rays').checked, jobs=panelJobs(settings,field,traceEnabled);
   const progress=byId('plot-progress');
-  progress.hidden=!jobs.some(job=>job.snapshot.custom && !panelCache.has(JSON.stringify(job)));
+  progress.hidden=!jobs.some(job=>WarpComputeCore.needsWorker(job) && !panelCache.has(JSON.stringify(job)));
   const results=await getPanelData(jobs,signal);
   if(signal.aborted) throw cancelled();
   layer=field;
@@ -271,6 +271,7 @@ async function update(signal){
   const clock=layer==='clock';
   const limit=clock?1:Math.max(...active.map(p=>Math.max(-p.samples.min,p.samples.max)));
   byId('clock-note').hidden=!clock;
+  byId('nec-note').hidden=field!=='nec' || !settings.some(WarpNec.moving);
   byId('clock-key').hidden=!clock || !active.some(p=>p.samples.unavailable);
 
   byId('legend-title').textContent=(comparing?'Shared scale · ':'')+fieldNames[layer];
@@ -407,7 +408,7 @@ function bindOrbit(canvas){
     turn(...moves[event.key]);
   });
 }
-function paintSlice({snapshot,w,h,ctx,heat,trace}){
+function paintSlice({snapshot,w,h,ctx,heat,trace,field}){
   if(!snapshot || !w) return;
   const unit=w/(2*extent);
   const x=u=>w/2+u*unit, y=v=>h/2-v*unit;
@@ -438,6 +439,14 @@ function paintSlice({snapshot,w,h,ctx,heat,trace}){
     ctx.strokeStyle='rgba(221,224,255,.55)';
     ctx.stroke();
     ctx.setLineDash([]);
+  }
+  if(field==='nec'){
+    const px=x(Number(byId('null-x').value)), py=y(Number(byId('null-y').value));
+    ctx.strokeStyle='#ffce8a';
+    ctx.beginPath();
+    ctx.moveTo(px-5,py);ctx.lineTo(px+5,py);
+    ctx.moveTo(px,py-5);ctx.lineTo(px,py+5);
+    ctx.stroke();
   }
   for(const {path} of trace){
     ctx.beginPath();
@@ -474,6 +483,7 @@ function queue(){
       legend.hidden=true;
       byId('launch-note').hidden=true;
       byId('clock-note').hidden=true;
+      byId('nec-note').hidden=true;
     }finally{
       if(renderController===controller){
         renderController=null;

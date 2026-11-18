@@ -1,5 +1,5 @@
 'use strict';
-importScripts('equations.js','physics.js','compute-core.js');
+importScripts('equations.js','physics.js','nec.js','compute-core.js');
 self.onmessage=({data})=>{
   try{
     const value=WarpComputeCore.runSync(data);

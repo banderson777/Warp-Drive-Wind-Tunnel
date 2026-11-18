@@ -37,7 +37,8 @@ const WarpView3D = (() => {
       const rings=14, azimuths=40;
       const mesh=Array.from({length:rings+1},(_,i)=>{
         const angle=Math.PI*i/rings, x=r*Math.cos(angle), y=r*Math.sin(angle);
-        const value=field==='clock'?Warp.clockRate(x,y,snapshot):Warp.field(x,y,snapshot)[field];
+        const value=panel.samples.surface?panel.samples.surface[i]:
+          field==='clock'?Warp.clockRate(x,y,snapshot):Warp.field(x,y,snapshot)[field];
         return {
           value,
           points:Array.from({length:azimuths},(_,j)=>{
