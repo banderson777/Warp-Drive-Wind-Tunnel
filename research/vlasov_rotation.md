@@ -108,6 +108,24 @@ The direct midpoint quadrature uses the finite-bias energy cutoff and population
 
 This calculation concerns phase-space occupancy in a prescribed stationary geometry. An actual flux across a moving boundary would require time evolution. The calculation supplies neither an ADM mass change nor the gravitational backreaction of the newly occupied layer.
 
+### Angular distribution inside the original cavity
+
+At leading order, the admitted rest mass per unit solid angle is proportional to $\sin^{7/2}\theta$, with colatitude $\theta$ measured from the rotation axis. Per unit colatitude, the spatial measure supplies one more factor of $\sin\theta$. This difference matters when comparing equal-area regions.
+
+To quantify the concentration, weight the admitted mass by $P_2(\cos\theta)=(3\cos^2\theta-1)/2$ and divide by its unweighted mass. An isotropic distribution gives zero. Integrating with the leading angular weight gives $\langle\cos^2\theta\rangle=2/13$, hence $\langle P_2\rangle=-7/26$. The negative sign describes concentration toward the equator. For a second check, the belt within 30° of the equator covers exactly half the solid angle. Its predicted mass fraction is
+
+$$
+\frac{\int_{\pi/3}^{\pi/2}\sin^{9/2}\theta\,d\theta}
+     {\int_0^{\pi/2}\sin^{9/2}\theta\,d\theta}.
+$$
+
+| Angular observable | Leading small-bias law | Bias 0.02, 20 bins | Bias 0.02, 32 bins |
+| --- | ---: | ---: | ---: |
+| Mass fraction within 30° of the equator | 77.1285% | 77.1242% | 77.1200% |
+| Mass-weighted $P_2$ | −0.269231 | −0.269147 | −0.269147 |
+
+The numerical check weights each finite-bias phase-space ring directly for $P_2$, and integrates the belt on a separate grid whose boundary falls exactly at 30° latitude. These observables describe particle rest mass inside the original cavity. An exterior gravitational quadrupole would also depend on the shell wall, stresses, and metric response.
+
 ## Reproduce and inspect
 
 Run `python3 -B research/vlasov_rotation.py dist/research-rotation.js` to repeat both resolutions and regenerate the display data. In **Shell experiments**, select **Matter-sourced counterrotation**. Switch between the azimuthal shift and signed azimuthal momentum density to see how the two current regions source the field.

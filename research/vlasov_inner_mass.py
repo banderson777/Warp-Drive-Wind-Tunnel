@@ -5,11 +5,12 @@ from vlasov_rotation import experiment
 from vlasov_shell import L0
 
 
-def cavity_mass(model, eta, n):
+def cavity_moments(model, eta, n, polar_min=0.):
+    """Rest mass and its P2-weighted integral, folded across the equator."""
     a, lapse, reference_shift, _, _ = model["rows"][0]
     shift = reference_shift * eta / model["eta"]
     if shift == 0:
-        return 0.
+        return 0., 0.
     floor = sqrt(L0)
     t0 = floor/a
     cap = sqrt(1+t0*t0)
@@ -17,8 +18,12 @@ def cavity_mass(model, eta, n):
     # half-plane and radial momentum signs separately.
     points = [(i+.5)/n for i in range(n)]
     total = 0.
+    weighted = 0.
+    span = pi/2-polar_min
     for polar in points:
-        sine = sin(pi*polar/2)
+        theta = polar_min+span*polar
+        sine = sin(theta)
+        ring = 0.
         for direction in points:
             projection = sine*cos(pi*direction/2)
             if shift < 0:
@@ -49,8 +54,23 @@ def cavity_mass(model, eta, n):
                         energy = sqrt(1+t*t+pmax2*radial*radial)
                         # Rationalized 1-E/E0 at p_r = radial*pmax.
                         f = bias*pmax2*(1-radial**2)/(cap*(cap+k*t+energy))
-                        total += r*r*sine*depth*t*width*pmax*f
-    return 16*pi*(pi/2)**2*total/n**5
+                        ring += r*r*sine*depth*t*width*pmax*f
+        total += ring
+        weighted += ring*(3*cos(theta)**2-1)/2
+    scale = 16*pi*(pi/2)*span/n**5
+    return scale*total, scale*weighted
+
+
+def cavity_mass(model, eta, n):
+    return cavity_moments(model, eta, n)[0]
+
+
+def leading_belt_fraction():
+    def angular_integral(lower):
+        n = 4096
+        step = (pi/2-lower)/n
+        return step*sum(sin(lower+(i+.5)*step)**4.5 for i in range(n))
+    return angular_integral(pi/3)/angular_integral(0.)
 
 
 def leading_mass(model, eta):
@@ -67,12 +87,22 @@ if __name__ == "__main__":
     assert cavity_mass(model,0.,8)==0.
     for eta in (.005,.01,.02):
         coarse = cavity_mass(model,eta,12)
-        fine = cavity_mass(model,eta,20)
+        fine, weighted = cavity_moments(model,eta,20)
+        print(f"eta={eta}: normalized P2={weighted/fine:.9f}")
+        assert abs(weighted/fine+7/26)<.0002
         leading = leading_mass(model,eta)
         print(f"eta={eta}: coarse={coarse:.9e} fine={fine:.9e} "
               f"leading={leading:.9e} fine/leading={fine/leading:.7f}",flush=True)
         assert abs(coarse/fine-1)<.006 and abs(fine/leading-1)<.006
     assert cavity_mass(model,-.02,12)==coarse
-    refined = cavity_mass(model,.02,32)
+    refined, weighted = cavity_moments(model,.02,32)
     print(f"eta=0.02 n=32: {refined:.10e}, change from n=20: {abs(fine/refined-1):.5%}")
     assert abs(fine/refined-1)<.001
+    leading_belt = leading_belt_fraction()
+    for n, mass in ((20,fine),(32,refined)):
+        belt, _ = cavity_moments(model,.02,n,polar_min=pi/3)
+        print(f"eta=.02 n={n}: equatorial belt fraction={belt/mass:.9f}, "
+              f"leading={leading_belt:.9f}",flush=True)
+        assert abs(belt/mass-leading_belt)<.0003
+    print(f"eta=.02 n=32: normalized P2={weighted/refined:.9f}, leading={-7/26:.9f}")
+    assert abs(weighted/refined+7/26)<.0002
