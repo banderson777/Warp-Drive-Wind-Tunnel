@@ -132,11 +132,59 @@ def export(path, result):
         payload,separators=(",",":"),allow_nan=False)+";\n")
 
 
+def check_inner_support(model):
+    """Infimum of the kinetic support on the prescribed inner-cavity metric."""
+    a,lapse,beta,_,_=model["rows"][0]
+    outer=model["rows"][-1][0]
+    cutoff=lapse*sqrt(1+L0/a**2)
+    angular_floor=sqrt(L0)
+    results={}
+    for amplitude in (0.,.01,.02,-.02):
+        shift=beta*amplitude/model["eta"]
+        for sine in (0.,.5,1.):
+            tilt=abs(shift)*sine
+            # Convex energy in sqrt(L). Its slope at the floor is smallest
+            # at the largest cavity radius, so this checks the whole cavity.
+            assert lapse*angular_floor/(a*a*sqrt(1+L0/a**2))>tilt
+            # Rationalized difference a-edge, including the exact axial zero.
+            base=cutoff/lapse
+            increment=tilt*angular_floor/lapse
+            old_root=angular_floor/a
+            change=increment*(2*base+increment)
+            new_root=sqrt(old_root**2+change)
+            displacement=a*change/(new_root*(new_root+old_root))
+            edge=a-displacement
+            results[amplitude,sine]=displacement
+            if tilt==0:
+                assert abs(displacement)<1e-14
+                continue
+            assert displacement>0
+            # Use admissible L strictly above the floor and both senses of
+            # tangential motion. Only the favorable sense enters the old cavity.
+            angular=angular_floor*(1+1e-10)
+            inside=edge-displacement/2
+            outside=edge+displacement/2
+            def energy(radius,sense):
+                return lapse*sqrt(1+(angular/radius)**2)-sense*tilt*angular
+            assert energy(inside,1)>cutoff
+            assert energy(outside,1)<cutoff<energy(outside,-1)
+    assert results[.02,1.]==results[-.02,1.]
+    assert abs(results[.02,1.]/results[.01,1.]-2)<.001
+    for sine in (0.,.5,1.):
+        delta=results[.02,sine]
+        print(f"inner support sin(theta)={sine:g}: inward {delta:.9g} length units, "
+              f"{delta*20/(a+outer):.9g} m at 10 m midpoint")
+    return results[.02,1.]
+
+
 def main():
     coarse = experiment(400,24)
     fine = experiment(800,40)
     for model in (coarse,fine):
         print({key: value for key,value in model.items() if key != "rows"})
+    coarse_edge=check_inner_support(coarse)
+    fine_edge=check_inner_support(fine)
+    assert abs(coarse_edge/fine_edge-1)<.002
     assert abs(fine["integratedJ"]) < 1e-9
     assert abs(fine["cavityBeta"]/coarse["cavityBeta"]-1)<.002
     assert abs(fine["peakDelay"]/coarse["peakDelay"]-1)<.002

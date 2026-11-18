@@ -55,6 +55,32 @@ The 400-step run gives cavity shift $8.10437\times10^{-6}$ and guided delay 2.26
 
 The guided-light result is the first-order difference $4\pi r^2|\beta|/N^2$ for counterpropagating beams on a stationary equatorial guide, expressed in asymptotic time. The 10 m scaling still requires roughly $1.63\times10^{27}$ kg of ADM mass at zeroth order. This is a stationary frame-dragging signal. Propulsion, stability, finite-amplitude assembly, and cancellation of higher-order exterior multipoles remain open. At second order the wall density, stresses, lapse, and spatial metric can change, so solving only the first-order shift cannot establish a finite-rotation solution.
 
+## Where the inner kinetic support begins
+
+Here we freeze the static cutoff $E_0$, the constant cavity lapse $N_c$ and the calculated first-order cavity shift $\beta_c$. For the static shell the squared-angular-momentum floor $L_0$ leaves an empty central region. The new calculation asks where the same distribution first permits particles when evaluated on that prescribed rotating geometry. Static shell support with a central vacuum is an established property of suitable Einstein–Vlasov distributions. [Rein, static shells](https://arxiv.org/abs/math-ph/9810014)
+
+At radius $r$ and colatitude $\theta$, minimize the particle energy over its local momentum. Zero radial momentum minimizes the kinetic term. At fixed $u=\sqrt L$, purely azimuthal motion of the favorable sign gives the largest shift reduction, because $|L_z|\le u\sin\theta$. The resulting energy is
+
+$$
+E_{\min}(u)=N_c\sqrt{1+u^2/r^2}-|\beta_c|u\sin\theta.
+$$
+
+This function is convex in $u$. For the tested shifts its derivative at $u=\sqrt{L_0}$ is positive throughout the original cavity. Its infimum is therefore approached at that floor. Setting the infimum equal to $E_0$ gives the inner edge
+
+$$
+r_{\rm in}(\theta)=\frac{\sqrt{L_0}}{\sqrt{[(E_0+|\beta_c|\sqrt{L_0}\sin\theta)/N_c]^2-1}} .
+$$
+
+At the edge itself the allowed phase-space volume is zero. Immediately outside it, particles with $L>L_0$ can satisfy the strict energy cutoff. Reversing the bias exchanges the favorable sense of motion and leaves this edge unchanged. The leading edge displacement scales with the **absolute** bias; the support boundary and the integrated matter moments need not have the same expansion.
+
+| Colatitude from the rotation axis | Inward displacement at bias 0.02 | At 10 m midpoint radius |
+| --- | ---: | ---: |
+| 0° | 0 | 0 |
+| 30° | 0.000005115 ℓ | 23.89 µm |
+| 90° | 0.000010230 ℓ | 47.78 µm |
+
+The equatorial displacement agrees within 0.002% between the two rotation grids. The regression checks both signs of bias, the zero-shift and axial limits, and the original energy inequality on each side of the predicted edge. The micrometre values use the same high-mass geometric rescaling as the clock example. They describe an areal-coordinate displacement on a frozen metric. Once matter occupies part of the original cavity, its gravitational response and any deformation of the kinetic distribution must be solved together to determine a self-consistent boundary.
+
 ## Reproduce and inspect
 
 Run `python3 -B research/vlasov_rotation.py dist/research-rotation.js` to repeat both resolutions and regenerate the display data. In **Shell experiments**, select **Matter-sourced counterrotation**. Switch between the azimuthal shift and signed azimuthal momentum density to see how the two current regions source the field.
