@@ -12,7 +12,7 @@ An interactive browser laboratory for prescribed general-relativistic metrics. O
 4. Choose **3D view** to rotate the bubble and photon bundle. Choose **Clock rate** to compare the center and wall.
 5. Open **Shell experiments** for the matter-sourced models and recorded time evolution.
 
-The calculation and packaged research data work offline. The page can use web fonts when available, and external papers require internet access.
+The calculation and packaged research data work offline. The simulator uses system fonts. External papers require internet access.
 
 ## Models and assumptions
 
@@ -92,7 +92,7 @@ Choose **Edit equations** to load an editable copy of the active model, or selec
 | Conformal pocket | Shift profile `f(r)` and spatial conformal scale `B(r)` |
 | Ultrastatic shell | Enclosed mass `m(r)` |
 
-Try `exp(-(r/R)^2)` in the axial shift family for a Gaussian profile. Expressions use `r` (coordinate radius), `R` (radius slider), `w` (wall scale), `v` (speed), `C` (compactness), and `pi`. Expressions are parsed as math. Use explicit multiplication, parentheses, decimal or scientific notation, and the operators `+ - * / ^`. Supported functions are `sin`, `cos`, `tanh`, `exp`, `log`, `sqrt`, `abs`, `min`, `max`, `clamp(x, lo, hi)`, and `smooth5(x)` (a clamped quintic smoothstep). **Load family preset** restores the selected family's editable defaults. Invalid expressions leave the last applied formula active.
+Try `exp(-(r/R)^2)` in the axial shift family for a Gaussian profile. Expressions use `r` (coordinate radius), `R` (radius slider), `w` (wall scale), `v` (speed), `C` (compactness), and `pi`. Expressions are parsed as math. Use explicit multiplication, parentheses, decimal or scientific notation, and the operators `+ - * / ^`. Supported functions are `sin`, `cos`, `tanh`, `exp`, `log`, `sqrt`, `abs`, `min`, `max`, `clamp(x, lo, hi)`, and `smooth5(x)` (a clamped quintic smoothstep). **Load family preset** restores the selected family's editable defaults. Invalid expressions leave the last applied formula active. The simulator checks the proposed field and selected photon paths before it saves a custom profile.
 
 The editor supports radial functions within the four implemented metric families. Derivatives are estimated with finite differences. The engine checks sampled values and the required metric signature where it evaluates the geometry. Very narrow features can be under-resolved, and sampled diagnostics cannot certify energy conditions or physical realizability.
 
@@ -135,15 +135,22 @@ Use an existing temporary directory in place of `/tmp` on platforms where that p
 
 Run `node verify.cjs` from this directory. Checks cover reference field signs, zero expansion, the flat control, and typical subluminal and superluminal photon integration cases, custom equation parsing and preset equivalence, 3D path sampling, and clock behavior at centers and null boundaries.
 
+### Browser security and computation
+
+Custom field and ray calculations and numerical checks use cancellable workers on HTTP(S). Opening the HTML directly uses a cooperative fallback that yields to the interface. Each asynchronous panel or numerical check has a 15-second time budget. A settings change supersedes the current plot computation. The active plot or numerical check can also be cancelled in the interface.
+
+The page uses a document Content Security Policy to restrict executable resources to same-origin files and block network requests from its scripts. Experiment files are read locally and formulas are evaluated by the math parser. External research links open as normal navigation.
+
 ### Repository layout
 
 - `dist/index.html` opens the simulator. `dist/app.js` manages the main tunnel, `dist/physics.js` implements the metrics and ray integration, `dist/equations.js` parses custom profiles, and `dist/view3d.js` draws the orbitable view.
+- `dist/compute-core.js` supplies the numerical jobs. The worker and local-file fallback use the same calculation logic.
 - `dist/research-view.js` renders the shell experiments using `dist/research-data.js` and `dist/research-rotation.js`.
 - `research/` contains the solvers, data exporters, and derivations. `verify.cjs` exercises the main-tunnel numerical engine.
 
 ## Experiment tools
 
-- **Save experiment / Open experiment** round-trip a versioned JSON file. It records both model choices, comparison state, sliders, custom formulas, selected field, clock observer convention, camera, grid, ray toggle, and numerical settings. Photon launch positions follow from the recorded radius, extent, and direction. Open the file in the same version of the simulator to restore the main tunnel. Imports validate slider ranges, the metric family, and the formula before applying the settings.
+- **Save experiment / Open experiment** round-trip a versioned JSON file. It records both model choices, comparison state, sliders, custom formulas, selected field, clock observer convention, camera, grid, ray toggle, and numerical settings. Photon launch positions follow from the recorded radius, extent, and direction. Open the file in the same version of the simulator to restore the main tunnel. Imports validate exact field and family names, slider ranges, and the renderable results before replacing the current experiment. An opened profile stays in the current session. Use **Apply custom equation** to save it locally.
 - **Field CSV** exports the selected meridional field with panel, model, coordinates, and value. A blank value means there is no fixed-coordinate clock at that sample. **Photon CSV** exports the computed slice paths with ray index, integration step, and coordinate time. Save the experiment JSON too if the CSV needs to be reproduced. Coordinates and times use geometric units.
 - **Guided labs** loads one of three built-in configurations for straight null paths, Natário expansion, or comparing a bubble center clock with a matter-shell cavity clock. Predict the outcome before opening **Expected result**.
 - **Numerical checks** compares minimum Eulerian density on grids with 200 and 400 columns and recomputes photon paths with half the coordinate time step. The report compares positions only at times present in both trajectories, and includes the finer run's normalized Hamiltonian drift. Agreement checks sensitivity to these particular settings.

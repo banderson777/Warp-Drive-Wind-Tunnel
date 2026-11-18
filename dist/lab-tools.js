@@ -20,12 +20,12 @@
       numerical:numericalSettings(activeSettings())};
   }
 
-  function restore(run){
+  async function restore(run,signal){
     if(!run || run.format!=='warp-drive-wind-tunnel' || run.version!==version || run.observer!==observer)
       throw Error('Choose a version 1 Warp Drive Wind Tunnel experiment.');
     const allowed=[...Object.keys(models),'custom'];
     if(!Array.isArray(run.models) || run.models.length!==2 || !run.models.every(m=>allowed.includes(m)) ||
-      !Object.prototype.hasOwnProperty.call(fieldNames,run.field) || !['2d','3d'].includes(run.view) ||
+      (typeof run.field!=='string' || !Object.prototype.hasOwnProperty.call(fieldNames,run.field)) || !['2d','3d'].includes(run.view) ||
       !['compare','rays','grid'].every(k=>typeof run[k]==='boolean')) throw Error('The experiment settings are incomplete.');
     for(const id of inputs){
       const el=byId(id), value=run.parameters && run.parameters[id];
@@ -39,23 +39,18 @@
     const candidate=WarpEquations.create(run.custom.family,run.custom.formulas);
     const selected=run.compare?run.models:run.models.slice(0,1);
     const parameters=Object.fromEntries(inputs.map(id=>[id,run.parameters[id]]));
-    const settings=selected.map(id=>{
-      const model=id==='custom'?candidate.family:id;
-      const s={...parameters,model,speed:['flat','shell'].includes(model)?0:parameters.speed};
-      if(id==='custom'){
-        s.custom=candidate;
-        Warp.validate(s,extent);
-      }
-      return s;
-    });
+    const settings=selected.map(id=>settingsFor(id,parameters,candidate));
     if(run.field==='nec' && settings.some(s=>!['flat','shell'].includes(s.model))) throw Error('Local NEC is unavailable for these models.');
     const expected=numericalSettings(settings);
     const actual=run.numerical;
     if(!actual || !Object.keys(expected).every(key=>JSON.stringify(expected[key])===JSON.stringify(actual[key])))
       throw Error('The recorded numerical settings do not match this experiment version.');
+    await getPanelData(panelJobs(settings,run.field,run.rays),signal);
+    if(signal.aborted) throw cancelled();
     custom=candidate;
     loadEditor(custom.family,custom.formulas);
-    try{localStorage.setItem(storageKey,JSON.stringify(custom));}catch(error){/* optional storage */}
+    // Imported profiles are session-local. Only an explicit editor apply saves a profile.
+
     for(const id of inputs) byId(id).value=run.parameters[id];
     byId('model').value=run.models[0];
     byId('second-model').value=run.models[1];
@@ -91,37 +86,57 @@
   byId('run-file').addEventListener('change',async event=>{
     const input=event.currentTarget, file=input.files[0];
     if(!file) return;
+    input.value='';
+    const controller=beginTransaction();
     try{
       if(file.size>32000) throw Error('Experiment files must be smaller than 32 KB.');
-      restore(JSON.parse(await file.text()));
+      status('Validating the experiment and calculating the view…');
+      const text=await file.text();
+      if(controller.signal.aborted) throw cancelled();
+      await restore(JSON.parse(text),controller.signal);
       status('Opened '+file.name+'.');
-    }catch(error){status(error.message,true);}
-    input.value='';
+    }catch(error){
+      if(transaction===controller) status(error.message,true);
+    }finally{
+      if(transaction===controller) transaction=null;
+    }
   });
 
-  function exported(callback){
-    try{update();callback();}
-    catch(error){status(error.message,true);}
+  let exporting=false;
+  async function exported(callback){
+    if(exporting) return;
+    exporting=true;
+    const ids=activeIds(), settings=activeSettings(), field=layer, rays=byId('rays').checked;
+    const buttons=['export-field','export-rays'].map(byId);
+    buttons.forEach(button=>button.disabled=true);
+    try{
+      const jobs=panelJobs(settings,field,rays);
+      status('Preparing export…');
+      const data=await getPanelData(jobs);
+      callback({ids,data,field,rays,dt:jobs[0].options.dt});
+    }catch(error){status(error.message,true);}
+    finally{
+      exporting=false;
+      buttons.forEach(button=>button.disabled=false);
+    }
   }
-  byId('export-field').addEventListener('click',()=>exported(()=>{
+  byId('export-field').addEventListener('click',()=>exported(({ids,data,field})=>{
     const rows=['panel,model,x_l,y_l,z_l,field,value'];
-    const ids=activeIds();
-    for(const [i,panel] of panels.slice(0,ids.length).entries()){
-      const nx=panel.heat.width, ny=panel.heat.height;
-      for(const [j,value] of panel.samples.values.entries()){
+    for(const [i,{samples}] of data.entries()){
+      const {nx,ny,values}=samples;
+      for(const [j,value] of values.entries()){
         const x=(2*(j%nx+.5)/nx-1)*extent, y=(1-2*(Math.floor(j/nx)+.5)/ny)*vertical;
-        rows.push([i+1,ids[i],x,y,0,layer,Number.isFinite(value)?value:''].join(','));
+        rows.push([i+1,ids[i],x,y,0,field,Number.isFinite(value)?value:''].join(','));
       }
     }
     download('warp-field.csv',rows.join('\n')+'\n','text/csv');
     status('Exported meridional field samples. Blank values mark unavailable measurements.');
   }));
-  byId('export-rays').addEventListener('click',()=>exported(()=>{
-    if(!byId('rays').checked) throw Error('Turn on Trace photon paths before exporting photon data.');
+  byId('export-rays').addEventListener('click',()=>exported(({ids,data,rays,dt})=>{
+    if(!rays) throw Error('Turn on Trace photon paths before exporting photon data.');
     const rows=['panel,model,ray,step,t_l,x_l,y_l,z_l'];
-    const ids=activeIds(), {dt}=numericalSettings(activeSettings());
-    for(const [i,panel] of panels.slice(0,ids.length).entries())
-      for(const [ray,{path}] of panel.trace.entries())
+    for(const [i,{trace}] of data.entries())
+      for(const [ray,{path}] of trace.entries())
         for(const [step,[x,y]] of path.entries()) rows.push([i+1,ids[i],ray,step,step*dt,x,y,0].join(','));
     download('warp-photons.csv',rows.join('\n')+'\n','text/csv');
     status('Exported the underlying meridional photon paths.');
@@ -166,41 +181,34 @@
     p.append(heading,value);
     container.append(p);
   }
-  function minimumDensity(s,nx){
-    const ny=Math.round(nx/aspect);
-    let minimum=0;
-    for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){
-      const rho=Warp.field((2*(i+.5)/nx-1)*extent,(1-2*(j+.5)/ny)*vertical,s).rho;
-      if(!Number.isFinite(rho)) throw Error('Density sampling encountered a nonfinite value.');
-      minimum=Math.min(minimum,rho);
-    }
-    return minimum;
-  }
-  byId('run-numerics').addEventListener('click',()=>{
-    const node=byId('numerics-results'), button=byId('run-numerics');
-    const ids=activeIds(), settings=activeSettings(), {dt,direction,maxSteps}=numericalSettings(settings);
+  let numericController=null;
+  byId('cancel-numerics').addEventListener('click',()=>{if(numericController) numericController.abort();});
+  byId('run-numerics').addEventListener('click',async()=>{
+    const node=byId('numerics-results'), button=byId('run-numerics'), cancel=byId('cancel-numerics');
+    const ids=activeIds(), settings=activeSettings(), options=traceOptions(settings);
+    const controller=new AbortController();
+    numericController=controller;
     button.disabled=true;
+    cancel.hidden=false;
     node.textContent='Computing both resolutions…';
-    setTimeout(()=>{
+    const results=[];
+    try{
+      for(const s of settings){
+        const job={...panelJob(s,layer,true,options),kind:'numerics'};
+        results.push(await WarpCompute.run(job,controller.signal));
+      }
       node.replaceChildren();
-      try{
-        for(const [i,s] of settings.entries()){
-          const coarse=minimumDensity(s,200), fine=minimumDensity(s,400);
-          const first=Warp.rays(s,extent,{direction,dt,maxSteps});
-          const second=Warp.rays(s,extent,{direction,dt:dt/2,maxSteps:maxSteps*2});
-          let deviation=0, matched=0;
-          for(const [j,{path}] of first.entries()) for(let k=0;k<path.length && k*2<second[j].path.length;k++){
-            const point=second[j].path[k*2];
-            deviation=Math.max(deviation,Math.hypot(point[0]-path[k][0],point[1]-path[k][1]));
-            matched++;
-          }
-          resultRow(node,modelNames(ids[i]),'Density minimum '+scientific(coarse)+' → '+scientific(fine)+
-            ' ℓ⁻² (200 → 400 columns). Largest matched-time photon difference '+scientific(deviation)+
-            ' ℓ over '+matched+' samples. Halved-step Hamiltonian drift '+scientific(Math.max(...second.map(r=>r.drift)))+'.');
-        }
-      }catch(error){node.textContent=error.message;}
-      finally{button.disabled=false;}
-    },30);
+      for(const [i,{coarse,fine,deviation,matched,drift}] of results.entries()){
+        resultRow(node,modelNames(ids[i]),'Density minimum '+scientific(coarse)+' → '+scientific(fine)+
+          ' ℓ⁻² (200 → 400 columns). Largest matched-time photon difference '+scientific(deviation)+
+          ' ℓ over '+matched+' samples. Halved-step Hamiltonian drift '+scientific(drift)+'.');
+      }
+    }catch(error){node.textContent=error.message;}
+    finally{
+      numericController=null;
+      cancel.hidden=true;
+      button.disabled=false;
+    }
   });
 
   function updateNull(){

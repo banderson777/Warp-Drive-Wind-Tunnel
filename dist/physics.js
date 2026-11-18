@@ -140,8 +140,9 @@ const Warp = (() => {
   function rayTimeStep(s) {
     return Math.min(s.width/10,s.model==='pocket'?.009:.045)/(1+s.speed);
   }
-  function rays(s,extent,{direction=rayDirection(s),dt=rayTimeStep(s),maxSteps=2300}={}) {
-    return Array.from({length:15},(_,i)=>{
+  function* trace(s,extent,{direction=rayDirection(s),dt=rayTimeStep(s),maxSteps=2300}={}) {
+    const rays=[];
+    for(let i=0;i<15;i++){
       let p=[-direction*extent*.995,(i-7)*s.radius*.24,direction,0];
       const path=[];
       const H=hamiltonian(p,s);
@@ -155,10 +156,18 @@ const Warp = (() => {
         drift=Math.max(drift,change);
         if(Math.hypot(next[0]-p[0],next[1]-p[1])<1e-7) break;
         p=next;
+        if(n%32===31) yield;
       }
-      return {path,drift};
-    });
+      rays.push({path,drift});
+    }
+    return rays;
   }
-  return {profile,shell,flow,field,clockRate,nullEnergy,hamiltonian,step,rayDirection,rayTimeStep,rays,validate};
+  function rays(s,extent,options){
+    const steps=trace(s,extent,options);
+    let result=steps.next();
+    while(!result.done) result=steps.next();
+    return result.value;
+  }
+  return {profile,shell,flow,field,clockRate,nullEnergy,hamiltonian,step,rayDirection,rayTimeStep,rays,trace,validate};
 })();
 if(typeof module==='object') module.exports=Warp;

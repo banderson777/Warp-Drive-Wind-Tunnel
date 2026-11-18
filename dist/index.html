@@ -2,12 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="An interactive general relativity laboratory for exploring warp metrics and null geodesics.">
 <title>Warp Drive Wind Tunnel</title>
 <link rel="stylesheet" href="style.css">
 <script defer src="equations.js"></script>
 <script defer src="physics.js"></script>
+<script defer src="compute-core.js"></script>
+<script defer src="compute-client.js"></script>
 <script defer src="view3d.js"></script>
 <script defer src="app.js"></script>
 <script defer src="research-data.js"></script>
@@ -75,6 +79,7 @@
     <button data-field="rho" aria-pressed="true">Energy density</button><button data-field="expansion" aria-pressed="false">Expansion</button><button data-field="shift" aria-pressed="false">Shift speed</button><button data-field="clock" aria-pressed="false">Clock rate</button><button data-field="nec" aria-pressed="false">Local NEC</button>
   </div>
   <p id="plot-error" role="alert" hidden></p>
+  <p id="plot-progress" class="launch-note" role="status" hidden>Calculating custom geometry… <button id="cancel-calculation" type="button">Cancel calculation</button></p>
   <div class="plots" id="plots"></div>
   <div class="legend" id="field-legend"><span id="legend-title"></span><span id="legend-min"></span><span id="gradient"></span><span id="legend-max"></span><span id="clock-key" hidden><i aria-hidden="true"></i> No stationary clock</span><span class="ray-key">─ &nbsp; Null geodesics</span></div>
   <p class="launch-note" id="orbit-note" hidden>Drag to rotate or focus the view and use the arrow keys. The mesh samples the selected field at the reference radius. Readouts still use the meridional slice.</p>
@@ -151,6 +156,7 @@
       <h3 id="numerics-title">Numerical checks</h3>
       <p>Compare density sampling at two resolutions and photon paths with a halved integration step.</p>
       <button id="run-numerics" type="button">Check current models</button>
+      <button id="cancel-numerics" type="button" hidden>Cancel numerical check</button>
       <div id="numerics-results" role="status"></div>
     </section>
     <section aria-labelledby="null-title">

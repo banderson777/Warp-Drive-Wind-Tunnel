@@ -151,3 +151,15 @@ assert.equal(index.index(far)[0],(1+mass/(2*far))**2);
 assert.equal(Optics.ray(()=>[1,0],1).deflection,0);
 assert(Optics.ray(index.index,1).deflection<0);
 console.log('Directional NEC and graded-index optics checks passed.');
+
+// Reject loose JSON types before looking up a family or accepting formulas.
+assert.throws(()=>Equations.create(['alcubierre'],{f:'0'}),/supported metric family/);
+assert.throws(()=>Equations.create('alcubierre',null),/formula object/);
+assert.throws(()=>Equations.create('alcubierre',[]),/formula object/);
+assert.throws(()=>Equations.create('alcubierre',Object.create({f:'0'})),/Expected a number/);
+const iterator=Warp.trace(alcubierre,6.2);
+let partial=iterator.next();
+assert.equal(partial.done,false);
+while(!partial.done) partial=iterator.next();
+assert.deepEqual(partial.value,sampleTrace);
+console.log('Strict equation input and resumable photon integration checks passed.');

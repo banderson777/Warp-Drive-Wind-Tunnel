@@ -98,10 +98,11 @@ const WarpEquations = (() => {
     shell:{m:'(C*R/2)*smooth5((r - R + w/2)/w)'}
   };
   function create(family,source){
-    if(!Object.prototype.hasOwnProperty.call(defaults,family)) throw new Error('Choose a supported metric family.');
+    if(typeof family!=='string' || !Object.prototype.hasOwnProperty.call(defaults,family)) throw new Error('Choose a supported metric family.');
+    if(!source || typeof source!=='object' || Array.isArray(source)) throw new Error('Provide a formula object.');
     const formulas={}, evaluate={};
     for(const key of Object.keys(defaults[family])){
-      const expression=typeof source[key]==='string'?source[key].trim():'';
+      const expression=Object.prototype.hasOwnProperty.call(source,key) && typeof source[key]==='string'?source[key].trim():'';
       try{evaluate[key]=compile(expression);}
       catch(error){throw new Error(key+'(r) · '+error.message);}
       formulas[key]=expression;

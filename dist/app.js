@@ -93,10 +93,10 @@ try{
 function currentValues(){
   return Object.fromEntries(inputs.map(id=>[id,Number(byId(id).value)]));
 }
-function settingsFor(model,values){
-  const family=model==='custom'?custom.family:model;
+function settingsFor(model,values,profile=custom){
+  const family=model==='custom'?profile.family:model;
   return {...values,model:family,speed:['flat','shell'].includes(family)?0:values.speed,
-    ...(model==='custom'?{custom}: {})};
+    ...(model==='custom'?{custom:profile}: {})};
 }
 function loadEditor(family,formulas){
   byId('equation-family').value=family;
@@ -117,27 +117,78 @@ function loadEditor(family,formulas){
   byId('equation-fields').replaceChildren(...fields);
   byId('equation-status').textContent='';
 }
-function applyEquation(event){
+const panelCache=new Map();
+const cancelled=()=>new DOMException('Calculation cancelled.','AbortError');
+let transaction=null;
+function beginTransaction(){
+  if(transaction) transaction.abort();
+  transaction=new AbortController();
+  return transaction;
+}
+function cancelTransaction(){
+  if(transaction) transaction.abort();
+}
+function panelJob(snapshot,field,rays,options){
+  const input={...snapshot};
+  if(snapshot.custom) input.custom={family:snapshot.custom.family,formulas:snapshot.custom.formulas};
+  return {kind:'panel',snapshot:input,field,rays,options,extent,aspect};
+}
+function traceOptions(settings){
+  return {direction:Math.min(...settings.map(Warp.rayDirection)),
+    dt:Math.min(...settings.map(Warp.rayTimeStep)),maxSteps:2300};
+}
+function panelJobs(settings,field,rays){
+  const options=traceOptions(settings);
+  return settings.map(s=>panelJob(s,field,rays,options));
+}
+async function getPanelData(jobs,signal){
+  const results=[];
+  for(const job of jobs){
+    if(signal && signal.aborted) throw cancelled();
+    const key=JSON.stringify(job);
+    let result=panelCache.get(key);
+    if(!result){
+      result=await WarpCompute.run(job,signal);
+      if(signal && signal.aborted) throw cancelled();
+      if(panelCache.size>=4) panelCache.delete(panelCache.keys().next().value);
+      panelCache.set(key,result);
+    }
+    results.push({key,...result});
+  }
+  return results;
+}
+
+async function applyEquation(event){
   event.preventDefault();
-  const status=byId('equation-status');
+  const status=byId('equation-status'), controller=beginTransaction();
+  const comparing=byId('compare').checked;
+  const replacePrimary=!comparing || byId('second-model').value!=='custom';
+  const selected=[replacePrimary?'custom':byId('model').value];
+  if(comparing) selected.push(byId('second-model').value);
   try{
     const family=byId('equation-family').value;
     const candidate=WarpEquations.create(family,Object.fromEntries(new FormData(event.currentTarget)));
-    const values=currentValues();
-    Warp.validate({...values,model:family,speed:family==='shell'?0:values.speed,custom:candidate},extent);
+    const values=currentValues(), settings=selected.map(id=>settingsFor(id,values,candidate));
+    const field=layer==='nec' && settings.some(s=>!['flat','shell'].includes(s.model))?'rho':layer;
+    status.classList.remove('error');
+    status.textContent='Validating the equation and calculating the view…';
+    await getPanelData(panelJobs(settings,field,byId('rays').checked),controller.signal);
+    if(controller.signal.aborted) throw cancelled();
     custom=candidate;
     try{localStorage.setItem(storageKey,JSON.stringify(candidate));}catch(error){/* Storage is optional. */}
-    if(!byId('compare').checked || byId('second-model').value!=='custom') byId('model').value='custom';
+    if(replacePrimary) byId('model').value='custom';
     status.textContent='Applied to the tunnel. Adjust the sliders or compare with a preset.';
-    status.classList.remove('error');
     queue();
   }catch(error){
+    if(transaction!==controller) return;
     status.classList.add('error');
     status.textContent=error.message+' The last applied equation is still active.';
+  }finally{
+    if(transaction===controller) transaction=null;
   }
 }
 
-function update(){
+async function update(signal){
   const comparing=byId('compare').checked;
   const primary=byId('model').value;
   const selected=comparing?[primary,byId('second-model').value]:[primary];
@@ -145,7 +196,14 @@ function update(){
   const values=currentValues();
   const settings=selected.map(model=>settingsFor(model,values));
   const supportsNEC=settings.every(s=>['shell','flat'].includes(s.model));
-  if(layer==='nec' && !supportsNEC) layer='rho';
+  const field=layer==='nec' && !supportsNEC?'rho':layer;
+  const traceEnabled=byId('rays').checked, jobs=panelJobs(settings,field,traceEnabled);
+  const progress=byId('plot-progress');
+  progress.hidden=!jobs.some(job=>job.snapshot.custom && !panelCache.has(JSON.stringify(job)));
+  const results=await getPanelData(jobs,signal);
+  if(signal.aborted) throw cancelled();
+  layer=field;
+  progress.hidden=true;
   byId('comparison-controls').hidden=!comparing;
   byId('plots').classList.toggle('comparing',comparing);
   panels[1].element.hidden=!comparing;
@@ -160,14 +218,11 @@ function update(){
     byId(id+'-out').textContent=values[id].toFixed(2)+({speed:' c',radius:' ℓ',width:' ℓ',compactness:''}[id]);
   }
   byId('model-note').textContent=primary==='custom'?'Custom profile · '+models[custom.family][0]:models[primary][0];
-  const direction=Math.min(...settings.map(Warp.rayDirection));
-  const dt=Math.min(...settings.map(Warp.rayTimeStep));
-  const traceEnabled=byId('rays').checked;
+  const {direction}=jobs[0].options;
   byId('launch-note').hidden=!comparing || !traceEnabled;
   byId('launch-note').textContent=direction===1?'Photons enter both views from the left.':'Photons enter both views from the right at the selected bubble speed.';
   for(const [index,panel] of active.entries()){
     const snapshot=settings[index], model=snapshot.model;
-    if(snapshot.custom) Warp.validate(snapshot,extent);
     const title=byId(index?'second-model':'model').selectedOptions[0].textContent;
     panel.snapshot=snapshot;
     panel.get('title').textContent=title;
@@ -180,17 +235,18 @@ function update(){
     const vacuum=snapshot.speed===0 && !['shell','pocket'].includes(model);
     panel.get('condition').textContent=vacuum?'Vacuum':models[model][1];
     panel.get('condition-note').textContent=vacuum?models.flat[2]:models[model][2];
-    const traceKey=JSON.stringify([snapshot,direction,dt,traceEnabled]);
-    if(traceKey!==panel.traceKey){
-      panel.trace=traceEnabled?Warp.rays(snapshot,extent,{direction,dt}):[];
-      panel.traceKey=traceKey;
-      panel.get('integration').textContent=traceEnabled?scientific(Math.max(...panel.trace.map(ray=>ray.drift))):'Off';
+    const {key,samples,trace}=results[index];
+    if(panel.sampleKey!==key){
+      panel.trace=trace;
+      panel.traceKey=key;
+      panel.sampleKey=key;
+      panel.samples=samples;
+      panel.heat.width=samples.nx;
+      panel.heat.height=samples.ny;
+      panel.get('density').textContent=scientific(samples.minRho);
+      panel.get('integration').textContent=traceEnabled?scientific(Math.max(...trace.map(ray=>ray.drift))):'Off';
     }
-    const sampleKey=JSON.stringify([snapshot,layer]);
-    if(sampleKey!==panel.sampleKey){
-      panel.samples=sample(panel);
-      panel.sampleKey=sampleKey;
-    }
+    panel.field=field;
     const clockRange=panel.get('clock-range');
     clockRange.hidden=layer!=='clock' || model==='flat';
     if(!clockRange.hidden){
@@ -273,41 +329,6 @@ function updateEquations(selected){
   });
   byId('equations').replaceChildren(...sections);
 }
-function sample(panel){
-  const nx=200, ny=Math.round(nx/aspect), values=new Float64Array(nx*ny);
-  panel.heat.width=nx;
-  panel.heat.height=ny;
-  let min=0,max=0,minRho=0,minNec=0,unavailable=false;
-  const center=layer==='clock'?Warp.clockRate(0,0,panel.snapshot):null;
-  let insideMin=center===null?Infinity:center, insideMax=center===null?0:center;
-  let insideUnavailable=center===null;
-  for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){
-    const x=(2*(i+.5)/nx-1)*extent, y=(1-2*(j+.5)/ny)*vertical;
-    const result=Warp.field(x,y,panel.snapshot);
-    if(!Number.isFinite(result.rho)) throw new Error('The sampled field overflows the numeric range.');
-    minRho=Math.min(minRho,result.rho);
-    const value=layer==='clock'?Warp.clockRate(x,y,panel.snapshot):result[layer];
-    if(layer==='clock' && Math.hypot(x,y)<panel.snapshot.radius){
-      if(value===null) insideUnavailable=true;
-      else{
-        insideMin=Math.min(insideMin,value);
-        insideMax=Math.max(insideMax,value);
-      }
-    }
-    if(value===null && layer==='clock'){
-      values[j*nx+i]=NaN;
-      unavailable=true;
-      continue;
-    }
-    if(!Number.isFinite(value)) throw new Error('The sampled field overflows the numeric range.');
-    values[j*nx+i]=value;
-    min=Math.min(min,value);
-    max=Math.max(max,value);
-    if(result.nec!==null) minNec=Math.min(minNec,result.nec);
-  }
-  panel.get('density').textContent=scientific(minRho);
-  return {min,max,values,minRho,minNec,unavailable,insideMin,insideMax,insideUnavailable};
-}
 function colorize(panel,limit){
   const {heat,hc,samples}=panel;
   if(panel.coloredSamples===samples && panel.limit===limit) return;
@@ -332,7 +353,7 @@ let in3D=false;
 const camera={...WarpView3D.defaultCamera};
 function paint(panel){
   if(!panel.snapshot || !panel.w) return;
-  if(in3D) WarpView3D.draw(panel,camera,extent,layer,byId('grid').checked,phase);
+  if(in3D) WarpView3D.draw(panel,camera,extent,panel.field,byId('grid').checked,phase);
   else paintSlice(panel);
 }
 function setView(spatial){
@@ -432,22 +453,32 @@ function paintSlice({snapshot,w,h,ctx,heat,trace}){
     }
   }
 }
+let renderController=null;
 function queue(){
+  if(renderController) renderController.abort();
   if(scheduled) return;
   scheduled=true;
-  requestAnimationFrame(()=>{
+  requestAnimationFrame(async()=>{
     scheduled=false;
+    const controller=new AbortController();
+    renderController=controller;
     const error=byId('plot-error'), plots=byId('plots'), legend=byId('field-legend');
     try{
-      update();
-      error.hidden=true;
+      await update(controller.signal);
+      if(!controller.signal.aborted) error.hidden=true;
     }catch(cause){
+      if(cause.name==='AbortError') return;
       error.textContent='The tunnel could not evaluate these settings. '+cause.message;
       error.hidden=false;
       plots.hidden=true;
       legend.hidden=true;
       byId('launch-note').hidden=true;
       byId('clock-note').hidden=true;
+    }finally{
+      if(renderController===controller){
+        renderController=null;
+        byId('plot-progress').hidden=true;
+      }
     }
   });
 }
@@ -477,10 +508,20 @@ function animate(now){
   }
   requestAnimationFrame(animate);
 }
-for(const id of [...inputs,'model','compare','second-model','rays','grid']) byId(id).addEventListener('input',queue);
-for(const button of document.querySelectorAll('[data-field]')) button.addEventListener('click',()=>{layer=button.dataset.field;queue();});
+for(const id of [...inputs,'model','compare','second-model','rays','grid']) byId(id).addEventListener('input',()=>{cancelTransaction();queue();});
+for(const button of document.querySelectorAll('[data-field]')) button.addEventListener('click',()=>{cancelTransaction();layer=button.dataset.field;queue();});
 byId('pause').addEventListener('click',()=>{paused=!paused;setPause();});
+byId('cancel-calculation').addEventListener('click',()=>{
+  if(!renderController) return;
+  renderController.abort();
+  const error=byId('plot-error');
+  error.textContent='Calculation cancelled. Change a setting to try again.';
+  error.hidden=false;
+  byId('plots').hidden=true;
+  byId('field-legend').hidden=true;
+});
 byId('reset').addEventListener('click',()=>{
+  cancelTransaction();
   for(const id of inputs) byId(id).value=byId(id).defaultValue;
   byId('model').value='alcubierre';
   byId('second-model').value='natario';
@@ -496,15 +537,19 @@ byId('reset').addEventListener('click',()=>{
 });
 document.querySelector('.model-source-jump').addEventListener('click',()=>{byId('model-notes').open=true;});
 byId('equation-form').addEventListener('submit',applyEquation);
+byId('equation-fields').addEventListener('input',cancelTransaction);
 byId('equation-family').addEventListener('change',()=>{
+  cancelTransaction();
   const family=byId('equation-family').value;
   loadEditor(family,WarpEquations.defaults[family]);
 });
 byId('load-preset').addEventListener('click',()=>{
+  cancelTransaction();
   const family=byId('equation-family').value;
   loadEditor(family,WarpEquations.defaults[family]);
 });
 byId('edit-model').addEventListener('click',()=>{
+  cancelTransaction();
   const selected=byId('model').value;
   if(selected==='custom') loadEditor(custom.family,custom.formulas);
   else if(selected!=='flat') loadEditor(selected,WarpEquations.defaults[selected]);
@@ -512,14 +557,20 @@ byId('edit-model').addEventListener('click',()=>{
 });
 loadEditor(custom.family,custom.formulas);
 byId('open-help').addEventListener('click',()=>byId('sim-help').showModal());
-byId('view-space').addEventListener('click',()=>setView(true));
-byId('view-slice').addEventListener('click',()=>setView(false));
+byId('view-space').addEventListener('click',()=>{cancelTransaction();setView(true);});
+byId('view-slice').addEventListener('click',()=>{cancelTransaction();setView(false);});
 byId('reset-camera').addEventListener('click',()=>{
   Object.assign(camera,WarpView3D.defaultCamera);
   turn(0,0);
 });
 for(const panel of panels) bindOrbit(panel.canvas);
-const observer=new ResizeObserver(queue);
+const observer=new ResizeObserver(()=>{
+  for(const panel of panels){
+    if(panel.element.hidden || byId('plots').hidden) continue;
+    resize(panel);
+    paint(panel);
+  }
+});
 for(const panel of panels) observer.observe(panel.canvas);
 queue();
 setPause();
