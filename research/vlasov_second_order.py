@@ -51,10 +51,10 @@ def linear(x,points,rows):
     return [a+f*(b-a) for a,b in zip(rows[i][1:],rows[i+1][1:])]
 
 
-def prepare(steps,quad):
-    rotation=experiment(steps,quad)
+def prepare(steps,quad,background_step,background_quad):
+    rotation=experiment(steps,quad,background_step=background_step,background_quad=background_quad)
     reference=[]
-    shell=solve(.1,.002,64,record=lambda r,state:reference.append((r,state[0],state[1])))
+    shell=solve(.1,background_step,background_quad,record=lambda r,state:reference.append((r,state[0],state[1])))
     radii=[row[0] for row in reference]
     profile=rotation["rows"]
     radial_rotation=[row[0] for row in profile]
@@ -102,8 +102,8 @@ def integrate(nodes,h,center_offset,rotating):
     return profiles
 
 
-def run(steps,quad):
-    shell,rotation,nodes,h=prepare(steps,quad)
+def run(steps,quad,*,background_step=.002,background_quad=64):
+    shell,rotation,nodes,h=prepare(steps,quad,background_step,background_quad)
     forcing=integrate(nodes,h,0.,True)
     homogeneous=integrate(nodes,h,1.,False)
     assert abs(homogeneous[-1][2])>1e-6
@@ -228,6 +228,17 @@ def main():
                 print(f"{steps:3d} {quad:2d} {condition:13} {quantity:18} "
                       f"{value:+.10e}  relative difference {difference:.5%}",flush=True)
                 assert difference < .01, (steps,quad,condition,quantity,value,reference)
+    # Hold the rotation and response grids fixed while refining the equilibrium.
+    for step,quad in ((.001,64),(.002,128),(.001,128)):
+        result=run(800,40,background_step=step,background_quad=quad)
+        for condition in ("fixedCentralY","fixedRestMass"):
+            for quantity in ("admChange","cavityDeficitChange"):
+                value=result[condition][quantity]
+                baseline=fine[condition][quantity]
+                relative=abs((value-baseline)/baseline)
+                print(f"background {step} {quad} {condition} {quantity} "
+                      f"{value:+.10e} change {relative:.8%}",flush=True)
+                assert relative < .001, (step,quad,condition,quantity,relative)
     if len(sys.argv)>1:
         Path(sys.argv[1]).write_text("globalThis.WarpSecondOrder="+json.dumps(
             fine,separators=(",",":"),allow_nan=False)+";\n")

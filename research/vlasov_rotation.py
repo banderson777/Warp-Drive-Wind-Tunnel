@@ -37,9 +37,9 @@ def moments(r, y, cutoff, n):
             normalization*plain, normalization*biased)
 
 
-def experiment(steps, quadrature):
+def experiment(steps, quadrature, *, background_step=.002, background_quad=64):
     ref = []
-    shell = solve(.1, .002, 64, record=lambda r, state: ref.append((r, state[0], state[1])))
+    shell = solve(.1, background_step, background_quad, record=lambda r, state: ref.append((r, state[0], state[1])))
     a,b,M = shell.a,shell.b,shell.mass
     E0 = exp(ref[-1][2])*sqrt(1-2*M/b)
     dr = (b-a)/steps

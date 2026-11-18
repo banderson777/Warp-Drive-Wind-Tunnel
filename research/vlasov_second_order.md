@@ -24,7 +24,20 @@ We crossed 400 and 800 radial intervals with 24 and 40 momentum quadrature subdi
 | ADM mass change, fixed particle rest mass | 0.00099% | 0.00935% |
 | Center clock deficit change, fixed particle rest mass | 0.00150% | 0.01065% |
 
-Momentum refinement produced the larger change in all four observables. All four grid combinations preserved the signs. These differences measure sensitivity over the tested interval. All runs use the same static background step (0.002) and background momentum quadrature (64), and share the spherical projection and perturbative truncation.
+Momentum refinement produced the larger change in all four observables. All four grid combinations preserved the signs. These differences measure sensitivity over the tested interval. Those four runs use the same static background step (0.002) and background momentum quadrature (64).
+
+### Static background sensitivity
+
+Holding the first- and second-order grids at 800 radial intervals and 40 momentum subdivisions, we recomputed the equilibrium used by both calculations. Each column reports the absolute difference relative to the magnitude of the original correction. The original background uses radial step 0.002 and 64 momentum subdivisions.
+
+| Observable | Halve radial step only | Double momentum subdivisions only | Refine both |
+| --- | ---: | ---: | ---: |
+| ADM mass change, fixed central cutoff | 0.00007196% | 0.00001581% | 0.00008777% |
+| Center clock deficit change, fixed central cutoff | 0.00003840% | 0.00001874% | 0.00005714% |
+| ADM mass change, fixed particle rest mass | 0.00028941% | 0.00014865% | 0.00043806% |
+| Center clock deficit change, fixed particle rest mass | 0.00004184% | 0.00011258% | 0.00007074% |
+
+Both clock corrections retain their signs throughout. For the fixed-rest-mass clock, the separate refinements shift the answer in opposite directions, which explains the smaller combined difference. The table measures sensitivity to discretization at this equilibrium. The spherical projection and truncation at second order are shared by every run; errors from those assumptions require separate physical calculations.
  A direct finite-bias integration of the displaced energy cutoff independently reproduced the second-order density, radial pressure, and particle-rest-density source terms at a wall point within 0.005%. An independent four-dimensional curvature calculation checked the signs of the shift contributions to the energy density and radial stress.
 
 ## Projected equations
