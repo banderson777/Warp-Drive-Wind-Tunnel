@@ -67,6 +67,15 @@ const WarpComputeCore = (() => {
       const trace=job.rays?yield* Warp.trace(s,extent,options):[];
       return {samples,trace};
     }
+    if(kind==='sweep'){
+      const point={};
+      for(const [name,nx,radial,angular] of [['coarse',200,96,24],['fine',400,192,48]]){
+        const density=(yield* sample(s,null,extent,aspect,nx)).minRho;
+        const {positive,negative}=Warp.ballIntegrals(s,radial,angular);
+        point[name]={density,positive,negative};
+      }
+      return point;
+    }
     if(kind!=='numerics') throw Error('Unknown computation.');
     const coarse=(yield* sample(s,null,extent,aspect,200)).minRho;
     const fine=(yield* sample(s,null,extent,aspect,400)).minRho;

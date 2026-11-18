@@ -21,6 +21,7 @@
 <script defer src="research-view.js"></script>
 <script defer src="lab-optics.js"></script>
 <script defer src="lab-tools.js"></script>
+<script defer src="sweep.js"></script>
 </head>
 <body>
 <header class="top"><div class="brand"><span class="mark" aria-hidden="true">◎</span> Warp Drive Wind Tunnel</div><nav aria-label="Main"><a href="#tunnel">Simulator</a><a href="#research-lab">Shell experiments</a><button id="open-help" type="button" aria-haspopup="dialog">Help</button></nav></header>
@@ -133,6 +134,14 @@
 </section>
 <section class="notebook experiment-tools" id="experiment-tools" aria-labelledby="experiment-title">
   <h2 id="experiment-title">Experiment tools</h2>
+  <details id="parameter-sweep">
+    <summary>Parameter sweep · Alcubierre and Natário</summary>
+    <p>What changes when you thin the wall? Sweep one control across its range while holding the other tunnel settings fixed. Compare both models at two resolutions.</p>
+    <label>Sweep <select id="sweep-axis"><option value="width">Wall thickness</option><option value="speed">Bubble speed</option><option value="radius">Coordinate radius</option></select></label>
+    <label>Plot <select id="sweep-field"><option value="density">Minimum Eulerian density</option><option value="negative">Integrated negative energy inside R</option><option value="positive">Integrated positive energy inside R</option></select></label>
+    <div class="editor-actions"><button id="sweep-run">Run sweep</button><button id="sweep-stop" hidden>Cancel</button><button id="sweep-save" disabled>Save sweep bundle</button><button id="sweep-open">Open and verify bundle</button><input id="sweep-file" type="file" accept=".json" hidden></div>
+    <p id="sweep-status" role="status"></p><div id="sweep-results" hidden><div id="sweep-figure"></div><p>Solid lines show fine sampling; dashed lines show coarse. Select a point or table button to open that comparison.</p><div id="sweep-table"></div></div>
+  </details>
   <div class="experiment-columns">
     <section aria-labelledby="run-title">
       <h3 id="run-title">Save and share</h3>

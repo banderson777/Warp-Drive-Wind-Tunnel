@@ -273,3 +273,24 @@ console.log('Custom center, sampled minima, proper volumes, signed energies and 
 const refined=Nec.probe(.4,R,natario,true);
 assert(refined.refinedMinimum<=refined.minimum);
 assert(Math.abs(Math.hypot(...refined.refinedDirection)-1)<1e-12);
+
+// A flat-speed sweep has exact zero stress on both grids. At nonzero speed,
+// the slice minimum and signed ball integral follow the exact v² scaling.
+for(const model of [alcubierre,natario]){
+  function sweep(speed){
+    return reviewEngine.runSync({kind:'sweep',extent:6.2,aspect:1.65,snapshot:{...model,speed}});
+  }
+  const zero=sweep(0),half=sweep(.325),full=sweep(.65);
+  for(const level of ['coarse','fine']){
+    for(const field of ['density','positive','negative']){
+      assert.equal(zero[level][field],0);
+      assert(Math.abs(full[level][field]-4*half[level][field])<1e-10);
+    }
+    assert(full[level].density<0 && full[level].negative<0);
+  }
+}
+const sweepHash=require('crypto').createHash('sha256');
+for(const source of ['physics.js','compute-core.js']) sweepHash.update(fsReview.readFileSync(require.resolve('./dist/'+source)));
+assert(fsReview.readFileSync(require.resolve('./dist/sweep.js'),'utf8').includes(sweepHash.digest('hex')),
+  'Refresh the sweep engine fingerprint after changing its numerical source.');
+console.log('Sweep grids, speed scaling and replay fingerprint passed.');
