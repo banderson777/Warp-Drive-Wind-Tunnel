@@ -2,7 +2,7 @@
 
 An interactive browser laboratory for prescribed general-relativistic metrics. Open `dist/index.html` in a modern browser. The simulator runs locally without a build or package installation.
 
-[Quick start](#quick-start) · [Controls and readouts](#controls-and-readouts) · [Experiment tools](#experiment-tools) · [Clock rates](#clock-rates) · [Custom equations](#custom-equations) · [Shell experiments](#shell-experiments) · [Reproduction](#reproduce-the-research) · [Model references](#model-references)
+[Quick start](#quick-start) · [Controls and readouts](#controls-and-readouts) · [Experiment tools](#experiment-tools) · [Independent benchmarks](#independent-solver-benchmarks) · [Clock rates](#clock-rates) · [Custom equations](#custom-equations) · [Shell experiments](#shell-experiments) · [Reproduction](#reproduce-the-research) · [Model references](#model-references)
 
 ## Quick start
 
@@ -157,6 +157,12 @@ The page uses a document Content Security Policy to restrict executable resource
 - **Directional null energy** evaluates $T_{ab}k^ak^b=\rho+p_r\cos^2\theta+p_t\sin^2\theta$ in the local orthonormal frame for 19 angles from radial to tangential at the selected radius. Spherical symmetry supplies the equivalent remaining directions. This diagnostic is available for the ultrastatic shell, including a custom shell, and flat space. Moving models retain the existing energy diagnostics.
 - **Physical scale** rescales the Einstein-cluster, Einstein–Vlasov, or counterrotating benchmark at fixed compactness. Enter a midpoint radius in meters to see ADM mass and cavity clock lag. The counterrotating case also gives the asymmetric guided-light delay and the rotation rate of an ideal flat circular guide producing the same local Sagnac delay. This comparison uses the small-rotation limit and the guide's local clock.
 - **Graded-index optics** solves the geometric-optics analog of the built-in static shell at the current radius, wall scale, and compactness. Its isotropic radius $q$ satisfies $d\ln q/dr=1/(r\sqrt{1-2m(r)/r})$ and is normalized at infinity. The effective index is $n(q)=r/q$ for the unit-lapse shell. Teal traces solve the gradient-index ray equations, dashed gray traces show the uniform control, and the purple curve shows $n(x)$ through the center. The optical model preserves spatial ray paths in isotropic coordinates. It models material refraction and supplies no gravitational source. [Optical geometry background](https://arxiv.org/abs/1010.3416)
+
+## Independent solver benchmarks
+
+In **Experiment tools**, download the Alcubierre or Natário experiment and reopen it with **Open experiment**. The fixtures use the same built-in profiles, speed (0.65 c), radius (2.1 ℓ), and wall scale (0.37 ℓ). The companion CSVs compare the actual browser engine to [Warpax](https://github.com/anindex/warpax) on two nested grids and include the reference orthonormal stress tensor. The grids in the CSVs are independent benchmark domains. Reopening the experiment restores the standard viewport and numerical settings.
+
+[Comparison method, results, and how to regenerate the datasets](research/benchmark_warpax.md) · [Benchmark files](dist/benchmarks)
 
 ## Model references
 

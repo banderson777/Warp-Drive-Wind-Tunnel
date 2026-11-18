@@ -1,0 +1,92 @@
+{
+  "warpax": "1.6.1",
+  "jax": "0.12.0.1",
+  "python": "3.12.16",
+  "sliceExtent": 3.5,
+  "cases": [
+    {
+      "model": "alcubierre",
+      "grid": 25,
+      "points": 625,
+      "spacing": 0.2916666666666667,
+      "maxDensityError": 1.8214596497756474e-17,
+      "rmsDensityError": 2.4326302459997125e-18,
+      "halfGradientMaxDensityError": 1.8214596497756474e-17,
+      "maxExpansionError": 1.1102230246251565e-15,
+      "rmsExpansionError": 2.448343921966664e-16,
+      "worstDensityPoint": [
+        -0.875,
+        2.041666666666667
+      ],
+      "minimumWindTunnelDensity": -0.0073680565598743235,
+      "minimumWarpaxDensity": -0.007368056559874321,
+      "minimumWarpaxPoint": [
+        -0.2916666666666665,
+        2.041666666666667
+      ]
+    },
+    {
+      "model": "alcubierre",
+      "grid": 49,
+      "points": 2401,
+      "spacing": 0.14583333333333334,
+      "maxDensityError": 1.8214596497756474e-17,
+      "rmsDensityError": 2.499713008571219e-18,
+      "halfGradientMaxDensityError": 1.8214596497756474e-17,
+      "maxExpansionError": 1.1102230246251565e-15,
+      "rmsExpansionError": 2.6098943163999314e-16,
+      "worstDensityPoint": [
+        -0.875,
+        2.041666666666667
+      ],
+      "minimumWindTunnelDensity": -0.0073680565598743235,
+      "minimumWarpaxDensity": -0.007368056559874321,
+      "minimumWarpaxPoint": [
+        -0.2916666666666665,
+        2.041666666666667
+      ]
+    },
+    {
+      "model": "natario",
+      "grid": 25,
+      "points": 625,
+      "spacing": 0.2916666666666667,
+      "maxDensityError": 5.13736511664753e-10,
+      "rmsDensityError": 8.884056236753767e-11,
+      "halfGradientMaxDensityError": 1.284985347294043e-10,
+      "maxExpansionError": 2.220446049250313e-16,
+      "rmsExpansionError": 3.554216006730774e-17,
+      "worstDensityPoint": [
+        0.0,
+        2.041666666666667
+      ],
+      "minimumWindTunnelDensity": -0.04613272412062204,
+      "minimumWarpaxDensity": -0.04613272446313957,
+      "minimumWarpaxPoint": [
+        0.5833333333333339,
+        -1.75
+      ]
+    },
+    {
+      "model": "natario",
+      "grid": 49,
+      "points": 2401,
+      "spacing": 0.14583333333333334,
+      "maxDensityError": 7.667935938981962e-10,
+      "rmsDensityError": 1.0056122573454892e-10,
+      "halfGradientMaxDensityError": 1.92292008704964e-10,
+      "maxExpansionError": 2.220446049250313e-16,
+      "rmsExpansionError": 3.2737516857661096e-17,
+      "worstDensityPoint": [
+        0.29166666666666696,
+        1.895833333333334
+      ],
+      "minimumWindTunnelDensity": -0.05479484438400997,
+      "minimumWarpaxDensity": -0.054794845112747674,
+      "minimumWarpaxPoint": [
+        0.0,
+        -1.8958333333333333
+      ]
+    }
+  ]
+}

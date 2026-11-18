@@ -79,7 +79,7 @@ const Warp = (() => {
     const {rho,radial,tangent}=shellStress(r,s);
     return rho+radial*radialCosine**2+tangent*(1-radialCosine**2);
   }
-  function field(x,y,s) {
+  function field(x,y,s,gradientStep=0.0001) {
     const r=Math.hypot(x,y);
     if(s.model==='shell') {
       const {rho,radial,tangent}=shellStress(r,s);
@@ -96,7 +96,7 @@ const Warp = (() => {
       return {rho:(curvature+6*isotropic**2+4*isotropic*d*x-d*d*y*y/2)/(16*Math.PI),
         expansion:d*x+3*isotropic,shift:B*shift,nec:null};
     }
-    const p=[x,y,0], h=0.0001*s.width;
+    const p=[x,y,0], h=gradientStep*s.width;
     const gradients=p.map((_,axis)=>{
       const a=p.slice(), b=p.slice();
       a[axis]+=h;

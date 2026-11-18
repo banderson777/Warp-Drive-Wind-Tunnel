@@ -163,3 +163,31 @@ assert.equal(partial.done,false);
 while(!partial.done) partial=iterator.next();
 assert.deepEqual(partial.value,sampleTrace);
 console.log('Strict equation input and resumable photon integration checks passed.');
+
+// Replay the independent reference samples against the shipped field engine.
+const fs = require('fs');
+const path = require('path');
+const benchmarks = path.join(__dirname,'dist','benchmarks');
+for(const name of ['alcubierre','natario']){
+  const {parameters,models}=JSON.parse(fs.readFileSync(path.join(benchmarks,name+'.json'),'utf8'));
+  assert.equal(models[0],name);
+  const benchmark={...parameters,model:name};
+  for(const grid of [25,49]){
+    const [header,...rows]=fs.readFileSync(path.join(benchmarks,name+'-'+grid+'.csv'),'utf8').trim().split('\n');
+    assert.equal(rows.length,grid*grid);
+    assert(header.startsWith('x_l,y_l,rho_wind_tunnel,rho_warpax,delta_rho,'));
+    let maxDensity=0, maxHalfStep=0;
+    for(const row of rows){
+      const [x,y,recorded,rho,,recordedExpansion,expansion]=row.split(',').map(Number);
+      const observed=Warp.field(x,y,benchmark);
+      assert(Math.abs(observed.rho-recorded)<1e-11);
+      assert(Math.abs(observed.expansion-recordedExpansion)<2e-12);
+      assert(Math.abs(observed.expansion-expansion)<2e-12);
+      maxDensity=Math.max(maxDensity,Math.abs(observed.rho-rho));
+      if(name==='natario') maxHalfStep=Math.max(maxHalfStep,Math.abs(Warp.field(x,y,benchmark,0.00005).rho-rho));
+    }
+    assert(maxDensity<(name==='natario'?2e-9:2e-12));
+    if(name==='natario') assert(maxHalfStep<.35*maxDensity);
+  }
+}
+console.log('Both Warpax reference grids replayed for both metrics.');

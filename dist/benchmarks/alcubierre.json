@@ -1,0 +1,42 @@
+{
+  "format": "warp-drive-wind-tunnel",
+  "version": 1,
+  "observer": "fixed-model-coordinate",
+  "models": [
+    "alcubierre",
+    "flat"
+  ],
+  "compare": false,
+  "parameters": {
+    "speed": 0.65,
+    "radius": 2.1,
+    "width": 0.37,
+    "compactness": 0.4
+  },
+  "field": "rho",
+  "view": "2d",
+  "camera": {
+    "yaw": 0.46,
+    "pitch": 0.32
+  },
+  "rays": true,
+  "grid": true,
+  "custom": {
+    "family": "alcubierre",
+    "formulas": {
+      "f": "(tanh((r+R)/w) - tanh((r-R)/w)) / (2*tanh(R/w))"
+    }
+  },
+  "numerical": {
+    "extent": 6.2,
+    "aspect": 1.65,
+    "fieldGrid": [
+      200,
+      121
+    ],
+    "photonIntegrator": "RK4",
+    "dt": 0.022424242424242423,
+    "direction": 1,
+    "maxSteps": 2300
+  }
+}
