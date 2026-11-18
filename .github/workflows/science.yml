@@ -22,3 +22,4 @@ jobs:
       - run: python3 -B research/vlasov_rotation.py
       - run: python3 -B research/vlasov_inner_mass.py
       - run: python3 -B research/vlasov_second_order.py
+      - run: python3 -B research/vlasov_quadrupole_orbit.py

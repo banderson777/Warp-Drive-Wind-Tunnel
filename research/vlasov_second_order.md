@@ -86,6 +86,32 @@ Reversing the bias and the azimuthal direction changes the sign of the shift and
 
 The direct quadratic density forcing contains a term proportional to $\sin^2\theta=(2/3)(1-P_2(\cos\theta))$. In this benchmark the peak magnitude of its angular-average coefficient is **3.19452 × 10⁻¹⁰ ℓ⁻²** at the stated bias. The exported peak includes the geometric term q and equals **3.19241 × 10⁻¹⁰ ℓ⁻²**. The nonspherical forcing is therefore nonzero. The exterior quadrupole depends on solving the coupled nonspherical metric and particle response, including the fact that squared total angular momentum need not remain conserved in the deformed geometry. This calculation does not determine the exterior quadrupole or demonstrate a finite-amplitude stationary solution.
 
+### Orbit test of the angular cutoff
+
+A quadrupolar field calculation must specify how it transports the matter distribution. We tested the existing sharp cutoff on a prescribed axisymmetric perturbation of the **static** Einstein–Vlasov equilibrium. The perturbation amplitude $\epsilon$ is independent of the counterrotation bias $\eta$. We retain the background spatial metric, set the shift to zero, and prescribe the lapse $N=N_0\exp[\epsilon h(r)P_2(\cos\theta)]$, with $h=\max(0,1-[(r-r_c)/(0.25\ell)]^2)^3$. The lapse stays positive and the perturbation is confined to the wall. This is a test metric for the transport equation; its stress tensor has not been matched to the particles.
+
+Here $L=p_\theta^2+L_z^2/\sin^2\theta$ denotes **squared** total angular momentum per unit particle mass. The particle Hamiltonian is $H=N\sqrt{1+A p_r^2+L/r^2}$. Stationarity conserves $H$ and axial symmetry conserves $L_z$. The canonical bracket gives the exact torque $\dot L=-2p_\theta H\epsilon h\,\partial_\theta P_2$. It vanishes in the spherical control and on equatorial orbits, but generally acts on inclined particles.
+
+We chose the circular background orbit directly on the cutoff $L=L_0=0.1\ell^2$, where the energy cutoff still permits occupation. Its radius is $r_c=1.443367069\ell$. Let $u$ be the unperturbed orbital phase, $\cos\theta=\sin i\sin u$, $u_0=\pi/4$, and $\Omega=N_0\sqrt{L_0}/(r_c^2\sqrt{1+L_0/r_c^2})$. Integrating the torque along that circular orbit predicts
+
+$$
+\Delta L^{(1)}=-2\epsilon\sqrt{L_0}\,\frac{H_0}{\Omega}
+  [P_2(\cos\theta(u))-P_2(\cos\theta(u_0))].
+$$
+
+We also integrated the full test-particle Hamilton equations for one background period, allowing radial and polar motion. The table gives excursions from the initial cutoff for inclination 45° and the largest absolute difference from the first-order trajectory over the period. All three result columns have units of ℓ².
+
+| Prescribed amplitude | Minimum change in L | Maximum change in L | Maximum first-order trajectory error |
+| ---: | ---: | ---: | ---: |
+| 0.00010 | −1.63742 × 10⁻⁴ | +1.63551 × 10⁻⁴ | 4.4413 × 10⁻⁶ |
+| 0.00005 | −8.18738 × 10⁻⁵ | +8.18251 × 10⁻⁵ | 1.1125 × 10⁻⁶ |
+
+Halving the amplitude reduced the trajectory discrepancy by a factor of 3.99, consistent with a first-order prediction. At the smaller amplitude, doubling the RK4 steps from 800 to 1,600 changed the extrema by at most $1.56\times10^{-9}\ell^2$. Relative Hamiltonian drift stayed below $7\times10^{-13}$ in the 800-step runs.
+
+The same characteristic spends finite intervals on both sides of $L_0$. Applying the old indicator $\mathbf1_{L>L_0}$ at each point would switch the distribution between zero and a positive value along that trajectory, contrary to collisionless transport. This identifies a concrete missing term for the proposed quadrupole calculation: the response of the angular cutoff itself. A first-order return of $L$ after one circular period does not restore pointwise stationarity. The test supplies a regression for a future transport solver; it determines neither a self-consistent exterior quadrupole nor a general third integral of motion. [Related axisymmetric Einstein–Vlasov existence study](https://arxiv.org/abs/1212.5028)
+
+Run `python3 -B research/vlasov_quadrupole_orbit.py` to reproduce both perturbations, the equatorial and spherical controls, and the time-step comparison.
+
 ## Reproduce and inspect
 
 ```bash
