@@ -112,6 +112,27 @@ The same characteristic spends finite intervals on both sides of $L_0$. Applying
 
 Run `python3 -B research/vlasov_quadrupole_orbit.py` to reproduce both perturbations, the equatorial and spherical controls, and the time-step comparison.
 
+### Carrying the cutoff along eccentric orbits
+
+For a finite-time collisionless initial-value test, label each characteristic by the value of $L$ at launch. To recover that label from a perturbed orbit at time $t$, integrate the first-order torque on a **separate spherical orbit** with the same launch position and momentum. With $z_0(t)$ the spherical trajectory, the transported estimate is
+
+$$
+L_{\rm tag}(t)=L(t)-\epsilon\int_0^t 6p_\theta H_0 h(r)\cos\theta\sin\theta\big|_{z_0(t')}\,dt'.
+$$
+
+Using the spherical trajectory in the integral is essential to the test. Integrating the exact torque on the perturbed orbit would simply undo its measured change. Here the omitted path response gives an expected error of order $\epsilon^2$ over fixed times.
+
+We launched two inclined trajectories from the circular reference radius with outward canonical momentum $p_r=0.025$, inclination 45°, and $L-L_0=\pm 0.00003\ell^2$. Each stayed below the energy cutoff. One was initially occupied and the other empty. Counts are mismatched labels at 801 equally spaced times over one reference circular period, including launch; they count samples, not distinct crossings.
+
+| Initial label | Perturbation | Mismatches with instantaneous L | Mismatches with transported label | Largest transported-label error (ℓ²) |
+| --- | ---: | ---: | ---: | ---: |
+| Empty | 0.00010 | 284 | 0 | 2.466 × 10⁻⁶ |
+| Occupied | 0.00010 | 392 | 0 | 2.463 × 10⁻⁶ |
+| Empty | 0.00005 | 219 | 0 | 6.190 × 10⁻⁷ |
+| Occupied | 0.00005 | 334 | 0 | 6.183 × 10⁻⁷ |
+
+The corrected label preserves the initial occupation at every sampled time for both particles. Halving the perturbation reduces the largest label error by about fourfold. Points closer to the cutoff than the label error can still be misclassified. This trajectory-dependent construction supplies a finite-time transport benchmark for prescribed initial data; constructing a stationary distribution requires consistency across phases, orbit families and repeated passages.
+
 ## Reproduce and inspect
 
 ```bash

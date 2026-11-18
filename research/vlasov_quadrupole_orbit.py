@@ -26,19 +26,19 @@ def cutoff_orbit():
     raise ValueError("No circular orbit on the angular cutoff")
 
 
-def integrate(orbit, epsilon, inclination, steps):
+def trajectory(orbit, epsilon, inclination, steps, angular=L0, radial=0.):
+    """Sample at equal times over one reference circular period."""
     radius, background, cutoff = orbit
     lapse = cutoff*exp(-background[1])
-    gamma0 = sqrt(1+L0/radius**2)
-    omega = lapse*sqrt(L0)/(radius**2*gamma0)
+    omega = lapse*sqrt(L0)/(radius**2*sqrt(1+L0/radius**2))
     u0 = pi/4
     theta = acos(sin(inclination)*sin(u0))
-    ptheta = -sqrt(L0)*sin(inclination)*cos(u0)/sin(theta)
-    lz = sqrt(L0)*cos(inclination)
-    initial = (radius,theta,0.,ptheta,background[0],background[1])
+    ptheta = -sqrt(angular)*sin(inclination)*cos(u0)/sin(theta)
+    lz = sqrt(angular)*cos(inclination)
+    initial = (radius,theta,radial,ptheta,background[0],background[1],0.)
 
     def evaluate(state):
-        r,theta,pr,pt,m,y = state
+        r,theta,pr,pt,m,y,_ = state
         dm,dy,*_ = slope(r,(m,y,0.,0.),L0,64)
         A = 1-2*m/r
         Ap = 2*(m/r-dm)/r
@@ -56,22 +56,14 @@ def integrate(orbit, epsilon, inclination, steps):
         dpr = H*(dy-epsilon*hp*P)-N*(Ap*pr**2-2*L/r**3)/(2*gamma)
         dpt = 3*H*epsilon*h*z*s+N*lz**2*z/(gamma*r*r*s**3)
         # Carry the static radial solution along the orbit by the chain rule.
-        return (dr,dt,dpr,dpt,dm*dr,dy*dr),L,H
+        torque_per_amplitude = 6*pt*H*h*z*s
+        return (dr,dt,dpr,dpt,dm*dr,dy*dr,torque_per_amplitude),L,H
 
     state = initial
-    H0 = evaluate(state)[2]
     dt = 2*pi/(omega*steps)
-    error = drift = 0.
-    changes = []
     for i in range(steps+1):
         k1,L,H = evaluate(state)
-        delta = L-L0
-        changes.append(delta)
-        u = u0+2*pi*i/steps
-        deltaP = 1.5*sin(inclination)**2*(sin(u)**2-sin(u0)**2)
-        prediction = -2*epsilon*sqrt(L0)*lapse*gamma0*deltaP/omega
-        error = max(error,abs(delta-prediction))
-        drift = max(drift,abs(H/H0-1))
+        yield L,H,state[6],state[0]
         if i==steps:
             break
         def shifted(k,scale):
@@ -80,7 +72,52 @@ def integrate(orbit, epsilon, inclination, steps):
         k3 = evaluate(shifted(k2,.5))[0]
         k4 = evaluate(shifted(k3,1.))[0]
         state = tuple(v+dt*(a+2*b+2*c+d)/6 for v,a,b,c,d in zip(state,k1,k2,k3,k4))
+
+
+def integrate(orbit, epsilon, inclination, steps):
+    radius,background,cutoff = orbit
+    lapse = cutoff*exp(-background[1])
+    gamma0 = sqrt(1+L0/radius**2)
+    omega = lapse*sqrt(L0)/(radius**2*gamma0)
+    u0 = pi/4
+    error = drift = 0.
+    changes = []
+    for i,(L,H,_,_) in enumerate(trajectory(orbit,epsilon,inclination,steps)):
+        if i==0:
+            H0=H
+        delta=L-L0
+        changes.append(delta)
+        u=u0+2*pi*i/steps
+        deltaP=1.5*sin(inclination)**2*(sin(u)**2-sin(u0)**2)
+        prediction=-2*epsilon*sqrt(L0)*lapse*gamma0*deltaP/omega
+        error=max(error,abs(delta-prediction))
+        drift=max(drift,abs(H/H0-1))
     return min(changes),max(changes),error,drift
+
+
+def check_eccentric_transport(orbit):
+    steps=800
+    for offset in (-3e-5,3e-5):
+        angular=L0+offset
+        launch=dict(inclination=pi/4,steps=steps,angular=angular,radial=.025)
+        background=list(trajectory(orbit,0.,**launch))
+        assert max(row[3] for row in background)-min(row[3] for row in background)>.05
+        previous=None
+        for eps in (1e-4,5e-5):
+            raw_errors=transport_errors=0
+            residual=0.
+            for (L,H,_,_),(_,_,torque,_) in zip(trajectory(orbit,eps,**launch),background):
+                assert H<orbit[2]
+                label=L-eps*torque
+                residual=max(residual,abs(label-angular))
+                raw_errors+=((L>L0)!=(offset>0))
+                transport_errors+=((label>L0)!=(offset>0))
+            print(f"initial L-L0={offset:+g} eps={eps:g} raw flips={raw_errors}/{steps+1} "
+                  f"transport mismatches={transport_errors} max label error={residual:.6e}",flush=True)
+            assert raw_errors>0 and transport_errors==0 and residual<abs(offset)
+            if previous is not None:
+                assert .2<residual/previous<.3
+            previous=residual
 
 
 if __name__ == "__main__":
@@ -102,3 +139,5 @@ if __name__ == "__main__":
                 fine=integrate(orbit,epsilon,inc,1600)
                 print("Step-halving change in extrema:",max(abs(fine[0]-low),abs(fine[1]-high)))
                 assert max(abs(fine[0]-low),abs(fine[1]-high))<1e-8
+
+    check_eccentric_transport(orbit)
