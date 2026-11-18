@@ -15,7 +15,17 @@ For the same reference shell and bias amplitude `η = 0.02`, the changes relativ
 
 The static center clock deficit is 0.159546729. A negative change means the center clock runs slightly faster than the corresponding static center clock, using distant time in both cases. At fixed particle rest mass the ADM mass rises by about eight parts in ten billion. Both changes refer to a perturbation of the existing high-mass shell.
 
-The 400- and 800-step radial solves agree within 0.013% for the mass and center-clock corrections in both cases. A direct finite-bias integration of the displaced energy cutoff independently reproduced the second-order density, radial pressure, and particle-rest-density source terms at a wall point within 0.005%. An independent four-dimensional curvature calculation checked the signs of the shift contributions to the energy density and radial stress.
+We crossed 400 and 800 radial intervals with 24 and 40 momentum quadrature subdivisions. The table shows each change as a percentage of the magnitude of the 800 × 40 result. Each column varies one setting while holding the other at its finer value.
+
+| Observable | Radial refinement, 400 → 800 | Momentum refinement, 24 → 40 |
+| --- | ---: | ---: |
+| ADM mass change, fixed central cutoff | 0.00134% | 0.01002% |
+| Center clock deficit change, fixed central cutoff | 0.00005% | 0.00610% |
+| ADM mass change, fixed particle rest mass | 0.00099% | 0.00935% |
+| Center clock deficit change, fixed particle rest mass | 0.00150% | 0.01065% |
+
+Momentum refinement produced the larger change in all four observables. All four grid combinations preserved the signs. These differences measure sensitivity over the tested interval. All runs use the same static background step (0.002) and background momentum quadrature (64), and share the spherical projection and perturbative truncation.
+ A direct finite-bias integration of the displaced energy cutoff independently reproduced the second-order density, radial pressure, and particle-rest-density source terms at a wall point within 0.005%. An independent four-dimensional curvature calculation checked the signs of the shift contributions to the energy density and radial stress.
 
 ## Projected equations
 
@@ -55,4 +65,4 @@ The direct quadratic density forcing contains a term proportional to $\sin^2\the
 python3 -B research/vlasov_second_order.py dist/research-second-order.js
 ```
 
-The script uses the Python standard library, runs the curvature and direct-quadrature checks, compares both resolutions, and regenerates the viewer data. In **Shell experiments**, select either second-order case, then view **Lapse-deficit change** or **Enclosed mass change**. Both cases share the scale for each field.
+The script uses the Python standard library, runs the curvature and direct-quadrature checks, compares all four grid combinations, and regenerates the viewer data. In **Shell experiments**, select either second-order case, then view **Lapse-deficit change** or **Enclosed mass change**. Both cases share the scale for each field.

@@ -217,16 +217,17 @@ def check_distribution():
 def main():
     check_geometry()
     check_distribution()
-    coarse=run(400,24)
-    fine=run(800,40)
-    for label,result in (('coarse',coarse),('fine',fine)):
-        summary={key:({k:v for k,v in value.items() if k!="profile"} if isinstance(value,dict) else value)
-                 for key,value in result.items()}
-        print(label,summary,flush=True)
-    for condition in ("fixedCentralY","fixedRestMass"):
-        for quantity in ("admChange","cavityDeficitChange"):
-            got=fine[condition][quantity]
-            assert abs(got-coarse[condition][quantity])<.01*abs(got)
+    cases={(steps,quad): run(steps,quad) for steps in (400,800) for quad in (24,40)}
+    fine=cases[800,40]
+    for (steps,quad),result in cases.items():
+        for condition in ("fixedCentralY","fixedRestMass"):
+            for quantity in ("admChange","cavityDeficitChange"):
+                value=result[condition][quantity]
+                reference=fine[condition][quantity]
+                difference=abs((value-reference)/reference)
+                print(f"{steps:3d} {quad:2d} {condition:13} {quantity:18} "
+                      f"{value:+.10e}  relative difference {difference:.5%}",flush=True)
+                assert difference < .01, (steps,quad,condition,quantity,value,reference)
     if len(sys.argv)>1:
         Path(sys.argv[1]).write_text("globalThis.WarpSecondOrder="+json.dumps(
             fine,separators=(",",":"),allow_nan=False)+";\n")

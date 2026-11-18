@@ -199,3 +199,5 @@ GitHub Actions runs the browser-engine regression suite and six standard-library
 For the built-in moving NEC models, the point probe also locally refines the lowest sampled direction on the unit sphere. This can find a lower null contraction between sampled directions. A nonnegative local result cannot certify the NEC globally. The map and sampled violation counts retain the original 198 directions.
 
 The optical regression compares 474 positions at matched coordinate times between a graded-index ray and an areal-coordinate spacetime ray. The maximum allowed separation is 0.00005 ℓ. The static-shell regression compares the outer radius, ADM mass, particle rest mass and cavity clock deficit to the independently integrated review values, with an absolute tolerance of 2 × 10⁻⁸ in the respective geometric units. These tolerances apply to the reference configuration.
+
+The [second-order shell refinement study](research/vlasov_second_order.md#numerical-results) varies radial and momentum resolution separately. The automated check reruns all four combinations and compares their mass and cavity-clock corrections.
