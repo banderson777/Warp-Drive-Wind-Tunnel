@@ -1,0 +1,78 @@
+"""Particle rest mass inside the original cavity on the frozen rotating metric."""
+from math import cos, pi, sin, sqrt
+
+from vlasov_rotation import experiment
+from vlasov_shell import L0
+
+
+def cavity_mass(model, eta, n):
+    a, lapse, reference_shift, _, _ = model["rows"][0]
+    shift = reference_shift * eta / model["eta"]
+    if shift == 0:
+        return 0.
+    floor = sqrt(L0)
+    t0 = floor/a
+    cap = sqrt(1+t0*t0)
+    # Midpoints on [0,1]. Fold the spatial hemispheres, favorable momentum
+    # half-plane and radial momentum signs separately.
+    points = [(i+.5)/n for i in range(n)]
+    total = 0.
+    for polar in points:
+        sine = sin(pi*polar/2)
+        for direction in points:
+            projection = sine*cos(pi*direction/2)
+            if shift < 0:
+                projection = -projection
+            tilt = shift*projection/lapse
+            increment = tilt*floor
+            change = increment*(2*cap+increment)
+            root = sqrt(t0*t0+change)
+            depth = a*change/(root*(root+t0))
+            for position in points:
+                inward = depth*position
+                r = a-inward
+                tmin = floor/r
+                k = tilt*r
+                # Radial momentum squared available at the tangential floor.
+                gap = change-tmin*tmin*inward*(a+r)/(a*a)
+                slope = tmin*(1-k*k)-cap*k
+                assert gap > 0 and slope > 0 and k*k < 1
+                width = gap/(slope+sqrt(slope*slope+(1-k*k)*gap))
+                for transverse in points:
+                    delta = width*transverse
+                    t = tmin+delta
+                    pmax2 = (width-delta)*(2*slope+(1-k*k)*(width+delta))
+                    pmax = sqrt(pmax2)
+                    L = (r*t)**2
+                    bias = 1+eta*(L/(L+3*L0)-model["kappa"])*projection
+                    for radial in points:
+                        energy = sqrt(1+t*t+pmax2*radial*radial)
+                        # Rationalized 1-E/E0 at p_r = radial*pmax.
+                        f = bias*pmax2*(1-radial**2)/(cap*(cap+k*t+energy))
+                        total += r*r*sine*depth*t*width*pmax*f
+    return 16*pi*(pi/2)**2*total/n**5
+
+
+def leading_mass(model, eta):
+    a, lapse, reference_shift, _, _ = model["rows"][0]
+    t0 = sqrt(L0)/a
+    cap = sqrt(1+t0*t0)
+    H = 2*cap*abs(reference_shift*eta/model["eta"])*sqrt(L0)/lapse
+    D = 2*t0*t0/a
+    return 8*pi*a*a * (4/(105*cap*cap*D)) * (pi/9) * H**3.5
+
+
+if __name__ == "__main__":
+    model = experiment(800,40)
+    assert cavity_mass(model,0.,8)==0.
+    for eta in (.005,.01,.02):
+        coarse = cavity_mass(model,eta,12)
+        fine = cavity_mass(model,eta,20)
+        leading = leading_mass(model,eta)
+        print(f"eta={eta}: coarse={coarse:.9e} fine={fine:.9e} "
+              f"leading={leading:.9e} fine/leading={fine/leading:.7f}",flush=True)
+        assert abs(coarse/fine-1)<.006 and abs(fine/leading-1)<.006
+    assert cavity_mass(model,-.02,12)==coarse
+    refined = cavity_mass(model,.02,32)
+    print(f"eta=0.02 n=32: {refined:.10e}, change from n=20: {abs(fine/refined-1):.5%}")
+    assert abs(fine/refined-1)<.001

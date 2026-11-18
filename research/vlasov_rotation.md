@@ -81,6 +81,33 @@ At the edge itself the allowed phase-space volume is zero. Immediately outside i
 
 The equatorial displacement agrees within 0.002% between the two rotation grids. The regression checks both signs of bias, the zero-shift and axial limits, and the original energy inequality on each side of the predicted edge. The micrometre values use the same high-mass geometric rescaling as the clock example. They describe an areal-coordinate displacement on a frozen metric. Once matter occupies part of the original cavity, its gravitational response and any deformation of the kinetic distribution must be solved together to determine a self-consistent boundary.
 
+## Particle rest mass inside the original cavity
+
+The boundary locates the first allowed orbits. To measure how populated those orbits are, integrate the distribution over the original cavity $r<a$ on the same frozen lapse and shift. For unit particle rest mass the slice integral is $\int f\,d^3p\,dV$, where momenta are measured in the orthonormal frame of the slice normal. The original cavity has flat spatial metric, so $dV=r^2\sin\theta\,dr\,d\theta\,d\phi$. This integral counts only the inner contribution; total shell particle number is not constrained in this frozen-distribution diagnostic.
+
+### Why a small displacement admits very little mass
+
+Write $x=a-r$, $t=|p_\perp|$, $t_0=\sqrt{L_0}/a$, $C=E_0/N_c$ and $D=2t_0^2/a$. Let $\psi$ be the momentum azimuth from the favorable azimuthal direction. To leading order in the signed bias the available squared radial momentum is
+
+$$
+g=H\sin\theta\cos\psi-Dx-2t_0(t-\sqrt{L_0}/r),\qquad
+H=2C|\beta_c|\sqrt{L_0}/N_c .
+$$
+
+Only $g>0$ contributes. The radial layer thickness and tangential momentum width each scale as $|\eta|$. The radial momentum width scales as $|\eta|^{1/2}$, and the distribution vanishes linearly at the energy cutoff, supplying one more factor of $|\eta|$. Together they give an admitted rest mass proportional to **$|\eta|^{7/2}$**, even though the edge displacement is linear in $|\eta|$.
+
+For a coefficient check, the leading cutoff factor is $(g-p_r^2)/(2C^2)$ for $|p_r|<\sqrt g$. Integrating it first in $p_r$, then in $t\,dt$ and $dx$, gives $4(H\sin\theta\cos\psi)^{7/2}/(105C^2D)$. After folding the two spatial hemispheres and favorable momentum directions, the remaining angular integral is $\int_0^{\pi/2}\sin^{9/2}\theta\,d\theta\int_0^{\pi/2}\cos^{7/2}\psi\,d\psi=\pi/9$. Thus the leading mass is $8\pi a^2[4/(105C^2D)](\pi/9)H^{7/2}$.
+
+| Bias magnitude | Direct rest mass inside $r<a$ (ℓ, 20 bins per variable) | Leading prediction (ℓ) |
+| ---: | ---: | ---: |
+| 0.005 | 1.1630 × 10⁻²¹ | 1.1649 × 10⁻²¹ |
+| 0.010 | 1.3149 × 10⁻²⁰ | 1.3180 × 10⁻²⁰ |
+| 0.020 | 1.4856 × 10⁻¹⁹ | 1.4911 × 10⁻¹⁹ |
+
+The direct midpoint quadrature uses the finite-bias energy cutoff and population weight, without expanding either. Each cell follows the actual allowed position and momentum intervals to resolve the thin layer. The regression compares against the analytic coefficient, repeats the integration at 12 and 20 bins per variable, and refines the reference bias to 32 bins. At bias 0.02 the 32-bin result is 1.48651 × 10⁻¹⁹ ℓ, a 0.0588% grid difference and about 5.57 × 10⁻¹⁹ of the reference shell’s particle rest mass. Zero bias yields zero mass; reversing the bias exchanges the populated sense of azimuthal motion. Run `python3 -B research/vlasov_inner_mass.py` to reproduce the table.
+
+This calculation concerns phase-space occupancy in a prescribed stationary geometry. An actual flux across a moving boundary would require time evolution. The calculation supplies neither an ADM mass change nor the gravitational backreaction of the newly occupied layer.
+
 ## Reproduce and inspect
 
 Run `python3 -B research/vlasov_rotation.py dist/research-rotation.js` to repeat both resolutions and regenerate the display data. In **Shell experiments**, select **Matter-sourced counterrotation**. Switch between the azimuthal shift and signed azimuthal momentum density to see how the two current regions source the field.
